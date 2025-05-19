@@ -1,0 +1,2 @@
+name = 'A mock instance for testing'
+game_exe_path = '...\path_to\...\Vintage Story\Vintagestory.exe'
