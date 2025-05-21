@@ -1,16 +1,22 @@
-# rustic-vs
+# Rustic
 
-Basic instance and mod manager for Vintage Story.
+~~Basic instance and mod manager for Vintage Story.~~   
+Just a basic, barely functional mockup for now.
+
+![screenshot](screenshot.png)
 
 ## !! VERY WIP !!
 
-- [X] Start the Game
 - [X] Mockup
-- [ ] Instances
-- [ ] Settings
+- [X] Instances
+  - [X] Create new instances
+  - [ ] Edit/Delete instances
+  - [ ] Icons and more config
+- [ ] Start the game via `--dataPath`
+- [ ] Launcher settings
 - [ ] Mod DB
-- [ ] Mod Updates
-- [ ] Mod Dependencies
+  - [ ] Mod updates
+  - [ ] Mod dependencies
 
 ## Notes
 
