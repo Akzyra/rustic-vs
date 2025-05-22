@@ -9,7 +9,7 @@ Just a basic, barely functional mockup for now.
 
 - [X] Mockup
 - [X] Instances
-  - [X] Create new instances
+  - [X] Create and rename instances
   - [ ] Edit/Delete instances
   - [ ] Icons and more config
 - [ ] Start the game via `--dataPath`

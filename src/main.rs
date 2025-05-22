@@ -2,13 +2,13 @@ mod api;
 mod instance;
 mod launcher;
 mod style;
+mod ui;
 
 use crate::instance::{Instance, load_instances};
-use iced::alignment::{Horizontal, Vertical};
+use iced::alignment::Vertical;
 use iced::keyboard::key;
 use iced::widget::{
-    button, center, column, container, horizontal_rule, horizontal_space, image, mouse_area,
-    opaque, row, scrollable, stack, text, text_input,
+    button, column, container, horizontal_rule, horizontal_space, image, row, scrollable, text,
 };
 use iced::{
     Center, Element, Event, Length, Padding, Size, Subscription, Task, Theme, event, keyboard,
@@ -30,20 +30,30 @@ pub fn main() -> iced::Result {
 struct Rustic {
     dark: bool,
     instances: Vec<Instance>,
-    show_new_instance: bool,
+    selected_instance: Option<usize>,
+    show_modal: Option<Modal>,
     instance_name: String,
 }
 
+enum Modal {
+    NewInstance,
+    EditInstance(String),
+}
+
 #[derive(Debug, Clone)]
-enum Message {
+pub enum Message {
     None,
     Event(Event),
     Refresh,
     ToggleDark,
+    // modals
     HideModal,
     NewInstance,
-    NewInstanceName(String),
     NewInstanceSubmit,
+    EditInstance(usize),
+    EditInstanceSubmit,
+    // form fields
+    InstanceName(String),
 }
 
 impl Default for Rustic {
@@ -51,7 +61,8 @@ impl Default for Rustic {
         Self {
             dark: true,
             instances: load_instances(),
-            show_new_instance: false,
+            selected_instance: None,
+            show_modal: None,
             instance_name: String::new(),
         }
     }
@@ -63,7 +74,7 @@ impl Rustic {
     }
 
     fn hide_modal(&mut self) {
-        self.show_new_instance = false;
+        self.show_modal = None;
         self.instance_name.clear();
     }
 
@@ -86,7 +97,7 @@ impl Rustic {
                     key: keyboard::Key::Named(key::Named::Escape),
                     ..
                 }) => {
-                    if self.show_new_instance {
+                    if self.show_modal.is_some() {
                         self.hide_modal();
                     }
                     Task::none()
@@ -95,33 +106,54 @@ impl Rustic {
             },
             Message::Refresh => {
                 self.instances = load_instances();
+                self.selected_instance = None;
                 Task::none()
             }
             Message::ToggleDark => {
                 self.dark = !self.dark;
                 Task::none()
             }
+            // modals
             Message::HideModal => {
                 self.hide_modal();
                 Task::none()
             }
             Message::NewInstance => {
-                self.show_new_instance = true;
+                self.show_modal = Some(Modal::NewInstance);
                 widget::focus_next()
             }
-            Message::NewInstanceName(name) => {
-                self.instance_name = name;
-                Task::none()
-            }
             Message::NewInstanceSubmit => {
-                // TODO: new instance
-                if !self.instance_name.trim().is_empty() {
-                    let cleaned_name = self.instance_name.trim();
+                let cleaned_name = self.instance_name.trim();
+                if !cleaned_name.is_empty() {
                     let new_instance = Instance::new(cleaned_name);
                     new_instance.save();
                     self.instances.push(new_instance);
                     self.hide_modal();
                 }
+                Task::none()
+            }
+            Message::EditInstance(index) => {
+                self.selected_instance = Some(index);
+                self.instance_name = self.instances[index].name.clone();
+                self.show_modal = Some(Modal::EditInstance(self.instance_name.clone()));
+                Task::none()
+            }
+            Message::EditInstanceSubmit => {
+                let cleaned_name = self.instance_name.trim();
+                if !cleaned_name.is_empty() {
+                    if let Some(index) = self.selected_instance {
+                        let instance = self.instances.get_mut(index).expect("should exist");
+                        instance.name = cleaned_name.to_string();
+                        instance.save();
+                        self.hide_modal();
+                        self.selected_instance = None;
+                    }
+                }
+                Task::none()
+            }
+            // forms
+            Message::InstanceName(name) => {
+                self.instance_name = name;
                 Task::none()
             }
         }
@@ -149,7 +181,7 @@ impl Rustic {
         .spacing(10)
         .align_y(Center);
 
-        let instance_widgets = self.instances.iter().map(|instance| {
+        let instance_widgets = self.instances.iter().enumerate().map(|(index, instance)| {
             container(
                 row![
                     Element::from(image("icons/vs.png").width(48).height(48)),
@@ -161,7 +193,9 @@ impl Rustic {
                     horizontal_space(),
                     row![
                         button("Mods").style(button::secondary),
-                        button("Edit").style(button::secondary),
+                        button("Edit")
+                            .style(button::secondary)
+                            .on_press(Message::EditInstance(index)),
                         button("Play").style(button::primary),
                     ]
                     .spacing(5)
@@ -186,63 +220,30 @@ impl Rustic {
         .width(Length::Fill)
         .height(Length::Fill);
 
-        if self.show_new_instance {
-            let form_new_instance = container(column![
-                row![text("Create new instance").size(20)]
-                    .padding(10)
-                    .spacing(10),
-                horizontal_rule(1),
-                column![
-                    row![
-                        text("Name:"),
-                        text_input("<enter name>", &self.instance_name)
-                            .style(if self.instance_name.trim().is_empty() {
-                                style::text_input_warning
-                            } else {
-                                text_input::default
-                            })
-                            .on_input(Message::NewInstanceName)
-                            .on_submit(Message::NewInstanceSubmit),
-                    ]
-                    .spacing(10)
-                    .align_y(Vertical::Center),
-                    row![
-                        horizontal_space(),
-                        button(text("OK").align_x(Horizontal::Center))
-                            .width(90)
-                            .on_press(Message::NewInstanceSubmit),
-                        button(text("Cancel").align_x(Horizontal::Center))
-                            .width(90)
-                            .style(button::secondary)
-                            .on_press(Message::HideModal),
-                    ]
-                    .spacing(10)
-                ]
-                .padding(10)
-                .spacing(10),
-            ])
-            .width(300)
-            .style(style::instance_box);
-
-            modal(content, form_new_instance, Message::None)
-        } else {
-            content.into()
+        match &self.show_modal {
+            Some(Modal::NewInstance) => ui::modal(
+                content,
+                ui::instance_form(
+                    "Create new instance",
+                    &self.instance_name,
+                    Message::InstanceName,
+                    Message::NewInstanceSubmit,
+                    Message::HideModal,
+                ),
+                Message::None,
+            ),
+            Some(Modal::EditInstance(instance_name)) => ui::modal(
+                content,
+                ui::instance_form(
+                    format!("Edit instance: {}", instance_name),
+                    &self.instance_name,
+                    Message::InstanceName,
+                    Message::EditInstanceSubmit,
+                    Message::HideModal,
+                ),
+                Message::None,
+            ),
+            None => content.into(),
         }
     }
-}
-
-// based on https://github.com/iced-rs/iced/blob/master/examples/modal/src/main.rs
-fn modal<'a, Message>(
-    base: impl Into<Element<'a, Message>>,
-    modal: impl Into<Element<'a, Message>>,
-    on_blur: Message,
-) -> Element<'a, Message>
-where
-    Message: Clone + 'a,
-{
-    stack![
-        base.into(),
-        opaque(mouse_area(center(opaque(modal)).style(style::model_backdrop)).on_press(on_blur))
-    ]
-    .into()
 }
