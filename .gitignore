@@ -5,4 +5,4 @@
 /target
 
 instances/*
-!instances/mock
+!instances/mock*

@@ -1,7 +1,7 @@
-use iced::widget::{container, text_input};
+use iced::widget::{button, container, text_input};
 use iced::{Border, Color, Theme};
 
-pub fn instance_box(theme: &Theme) -> container::Style {
+pub fn rounded_container(theme: &Theme) -> container::Style {
     let palette = theme.extended_palette();
 
     container::Style {
@@ -15,6 +15,27 @@ pub fn instance_box(theme: &Theme) -> container::Style {
     }
 }
 
+pub fn instance_button(theme: &Theme, status: button::Status) -> button::Style {
+    let palette = theme.extended_palette();
+    let style = button::Style {
+        background: Some(palette.background.weak.color.into()),
+        border: Border {
+            width: 1.0,
+            radius: 5.into(),
+            color: palette.background.strong.color,
+        },
+        ..button::secondary(theme, status)
+    };
+
+    match status {
+        button::Status::Hovered => button::Style {
+            background: Some(palette.background.weak.color.scale_alpha(0.5).into()),
+            ..style
+        },
+        _ => style,
+    }
+}
+
 pub fn model_backdrop(_theme: &Theme) -> container::Style {
     container::Style {
         background: Some(
@@ -22,7 +43,7 @@ pub fn model_backdrop(_theme: &Theme) -> container::Style {
                 a: 0.8,
                 ..Color::BLACK
             }
-            .into(),
+                .into(),
         ),
         ..container::Style::default()
     }

@@ -8,7 +8,7 @@ use crate::instance::{Instance, load_instances};
 use iced::alignment::Vertical;
 use iced::keyboard::key;
 use iced::widget::{
-    button, column, container, horizontal_rule, horizontal_space, image, row, scrollable, text,
+    button, column, horizontal_rule, horizontal_space, image, row, scrollable, text,
 };
 use iced::{
     Center, Element, Event, Length, Padding, Size, Subscription, Task, Theme, event, keyboard,
@@ -42,10 +42,13 @@ enum Modal {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    // misc
     None,
     Event(Event),
     Refresh,
     ToggleDark,
+    // gui
+    SelectInstance(usize),
     // modals
     HideModal,
     NewInstance,
@@ -80,6 +83,7 @@ impl Rustic {
 
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            // misc
             Message::None => Task::none(),
             Message::Event(event) => match event {
                 Event::Keyboard(keyboard::Event::KeyPressed {
@@ -111,6 +115,11 @@ impl Rustic {
             }
             Message::ToggleDark => {
                 self.dark = !self.dark;
+                Task::none()
+            }
+            // gui
+            Message::SelectInstance(index) => {
+                self.selected_instance = Some(index);
                 Task::none()
             }
             // modals
@@ -182,9 +191,9 @@ impl Rustic {
         .align_y(Center);
 
         let instance_widgets = self.instances.iter().enumerate().map(|(index, instance)| {
-            container(
+            button(
                 row![
-                    Element::from(image("icons/vs.png").width(48).height(48)),
+                    Element::from(image(ui::load_icon(&instance.icon)).width(48).height(48)),
                     column![
                         text(instance.name.clone()).size(16),
                         text("X mods").size(12),
@@ -203,9 +212,10 @@ impl Rustic {
                 .spacing(10)
                 .align_y(Vertical::Center),
             )
-            .style(style::instance_box)
+            .style(style::instance_button)
             .width(Length::Fill)
             .padding(Padding::from(5).right(10))
+            .on_press(Message::SelectInstance(index))
         });
 
         let instance_list = column(instance_widgets.map(Element::from))

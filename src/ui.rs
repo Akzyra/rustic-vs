@@ -2,9 +2,24 @@ use crate::style;
 use iced::Element;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{
-    Container, Row, button, center, column, container, horizontal_rule, horizontal_space,
+    Container, Row, button, center, column, container, horizontal_rule, horizontal_space, image,
     mouse_area, opaque, row, stack, text, text_input,
 };
+use std::convert::Into;
+use std::env;
+
+pub const DEFAULT_ICON: &[u8] = include_bytes!("../assets/default.png");
+
+pub fn load_icon(name: &Option<String>) -> image::Handle {
+    if let Some(name) = name {
+        let root = env::current_dir().expect("Failed to get CWD");
+        let path = root.join("icons").join(name);
+        if path.is_file() {
+            return path.strip_prefix(root).expect("failed rel path").into();
+        }
+    }
+    image::Handle::from_bytes(DEFAULT_ICON)
+}
 
 pub fn form_text_input<'a, Message>(
     label: impl text::IntoFragment<'a>,
@@ -52,19 +67,6 @@ where
                 name_on_input,
                 on_submit.clone()
             ),
-            // row![
-            //     text("Name:"),
-            //     text_input("<enter name>", &name_value)
-            //         .style(if name_value.trim().is_empty() {
-            //             style::text_input_warning
-            //         } else {
-            //             text_input::default
-            //         })
-            //         .on_input(name_on_input)
-            //         .on_submit(on_submit.clone()),
-            // ]
-            // .spacing(10)
-            // .align_y(Vertical::Center),
             row![
                 horizontal_space(),
                 button(text("OK").align_x(Horizontal::Center))
@@ -81,7 +83,7 @@ where
         .spacing(10),
     ])
     .width(300)
-    .style(style::instance_box)
+    .style(style::rounded_container)
 }
 
 // based on https://github.com/iced-rs/iced/blob/master/examples/modal/src/main.rs
