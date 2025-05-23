@@ -1,10 +1,10 @@
-use crate::style;
-use iced::Element;
+use crate::{Rustic, style};
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{
     Container, Row, button, center, column, container, horizontal_rule, horizontal_space, image,
-    mouse_area, opaque, row, stack, text, text_input,
+    mouse_area, opaque, row, scrollable, stack, text, text_input,
 };
+use iced::{Element, Length};
 use std::convert::Into;
 use std::env;
 
@@ -86,6 +86,48 @@ where
     .style(style::rounded_container)
 }
 
+pub fn instance_view(state: &Rustic) -> Container<crate::Message> {
+    let index = state.selected_index.expect("modal open without selection");
+    let instance = &state.instances[index];
+    let folder_name = instance.folder_name.to_string_lossy().to_string();
+
+    container(column![
+        row![
+            Element::from(image(load_icon(&instance.icon)).width(48).height(48)),
+            column![
+                text(instance.name.clone()).size(16),
+                row![
+                    text("X mods").size(12),
+                    text("•").size(12),
+                    text(format!("Folder: {folder_name}")).size(12),
+                ]
+                .spacing(5)
+                .align_y(Vertical::Center)
+            ]
+            .spacing(5),
+            horizontal_space(),
+            button("Edit")
+                .style(button::secondary)
+                .on_press(crate::Message::EditInstance(index)),
+            button("X")
+                .style(button::secondary)
+                .on_press(crate::Message::HideModal)
+        ]
+        .align_y(Vertical::Center)
+        .padding(10)
+        .spacing(10),
+        horizontal_rule(1),
+        scrollable(
+            column![text("TODO:"), text("add mod list"), text("and other stuff")]
+                .width(Length::Fill)
+                .padding(10)
+                .spacing(10)
+        )
+    ])
+    .width(Length::Fill)
+    .style(style::rounded_container)
+}
+
 // based on https://github.com/iced-rs/iced/blob/master/examples/modal/src/main.rs
 pub fn modal<'a, Message>(
     base: impl Into<Element<'a, Message>>,
@@ -97,7 +139,14 @@ where
 {
     stack![
         base.into(),
-        opaque(mouse_area(center(opaque(modal)).style(style::model_backdrop)).on_press(on_blur))
+        opaque(
+            mouse_area(
+                center(opaque(modal))
+                    .padding(40)
+                    .style(style::model_backdrop)
+            )
+            .on_press(on_blur)
+        )
     ]
     .into()
 }

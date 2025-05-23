@@ -30,7 +30,7 @@ pub fn main() -> iced::Result {
 struct Rustic {
     dark: bool,
     instances: Vec<Instance>,
-    selected_instance: Option<usize>,
+    selected_index: Option<usize>,
     show_modal: Option<Modal>,
     instance_name: String,
 }
@@ -38,6 +38,7 @@ struct Rustic {
 enum Modal {
     NewInstance,
     EditInstance(String),
+    ViewInstance,
 }
 
 #[derive(Debug, Clone)]
@@ -64,7 +65,7 @@ impl Default for Rustic {
         Self {
             dark: true,
             instances: load_instances(),
-            selected_instance: None,
+            selected_index: None,
             show_modal: None,
             instance_name: String::new(),
         }
@@ -110,7 +111,7 @@ impl Rustic {
             },
             Message::Refresh => {
                 self.instances = load_instances();
-                self.selected_instance = None;
+                self.selected_index = None;
                 Task::none()
             }
             Message::ToggleDark => {
@@ -119,7 +120,8 @@ impl Rustic {
             }
             // gui
             Message::SelectInstance(index) => {
-                self.selected_instance = Some(index);
+                self.selected_index = Some(index);
+                self.show_modal = Some(Modal::ViewInstance);
                 Task::none()
             }
             // modals
@@ -142,7 +144,7 @@ impl Rustic {
                 Task::none()
             }
             Message::EditInstance(index) => {
-                self.selected_instance = Some(index);
+                self.selected_index = Some(index);
                 self.instance_name = self.instances[index].name.clone();
                 self.show_modal = Some(Modal::EditInstance(self.instance_name.clone()));
                 Task::none()
@@ -150,12 +152,13 @@ impl Rustic {
             Message::EditInstanceSubmit => {
                 let cleaned_name = self.instance_name.trim();
                 if !cleaned_name.is_empty() {
-                    if let Some(index) = self.selected_instance {
-                        let instance = self.instances.get_mut(index).expect("should exist");
-                        instance.name = cleaned_name.to_string();
-                        instance.save();
-                        self.hide_modal();
-                        self.selected_instance = None;
+                    if let Some(index) = self.selected_index {
+                        if let Some(instance) = self.instances.get_mut(index) {
+                            instance.name = cleaned_name.to_string();
+                            instance.save();
+                            self.hide_modal();
+                            self.selected_index = None;
+                        }
                     }
                 }
                 Task::none()
@@ -231,6 +234,11 @@ impl Rustic {
         .height(Length::Fill);
 
         match &self.show_modal {
+            Some(Modal::ViewInstance) => ui::modal(
+                content,
+                ui::instance_view(&self),
+                Message::None,
+            ),
             Some(Modal::NewInstance) => ui::modal(
                 content,
                 ui::instance_form(
