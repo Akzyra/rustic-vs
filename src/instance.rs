@@ -74,6 +74,7 @@ pub fn load_instances() -> Vec<Instance> {
 
     let root = env::current_dir().expect("Failed to get CWD");
     let instances_folder = root.join(INSTANCE_FOLDER);
+    fs::create_dir(&instances_folder).expect("failed to ensure instances folder");
 
     println!("loading from {}", instances_folder.display());
 
