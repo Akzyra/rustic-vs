@@ -9,6 +9,7 @@ use zip::ZipArchive;
 
 const MODINFO_JSON: &str = "modinfo.json";
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct ModInfo {
     #[serde(skip)]
@@ -28,17 +29,17 @@ pub struct ModInfo {
 }
 
 #[derive(Debug)]
-pub enum Error {
-    ModZipMissing,
-    ModZipParseError,
-    ModInfoParseError(#[expect(unused)] json5::Error),
+pub enum ModError {
+    ZipMissing,
+    ZipParseError,
+    InfoParseError(#[expect(unused)] json5::Error),
 }
 impl ModInfo {
-    fn from_zip(zip_path: &PathBuf) -> Result<ModInfo, Error> {
+    fn from_zip(zip_path: &PathBuf) -> Result<ModInfo, ModError> {
         let Some(filename) = zip_path.file_name() else {
-            return Err(Error::ModZipMissing);
+            return Err(ModError::ZipMissing);
         };
-        let file = File::open(zip_path).map_err(|_| Error::ModZipParseError)?;
+        let file = File::open(zip_path).map_err(|_| ModError::ZipParseError)?;
         let mut zip = ZipArchive::new(file).unwrap();
 
         match zip.by_name(MODINFO_JSON) {
@@ -46,9 +47,9 @@ impl ModInfo {
                 let mut json = String::new();
                 json_file
                     .read_to_string(&mut json)
-                    .map_err(|_| Error::ModZipParseError)?;
+                    .map_err(|_| ModError::ZipParseError)?;
                 let mut mod_info: ModInfo =
-                    json5::from_str(&json).map_err(|e| Error::ModInfoParseError(e))?;
+                    json5::from_str(&json).map_err(ModError::InfoParseError)?;
 
                 mod_info.zip_name = filename.to_os_string();
 
@@ -69,22 +70,20 @@ pub fn load_mods(folder_path: &PathBuf) -> Vec<ModInfo> {
 
     let mut mods = Vec::new();
 
-    for entry in fs::read_dir(folder_path).expect("failed to read mods folder") {
-        match entry {
-            Ok(entry) => {
-                let zip_name = entry.file_name();
-                match ModInfo::from_zip(&entry.path()) {
-                    Ok(mod_info) => {
-                        println!("parsed mod {} ", zip_name.display());
-                        mods.push(mod_info);
-                    }
-                    Err(e) => {
-                        println!("failed mod {}: {:?}", zip_name.display(), e)
-                    }
-                }
+    for entry in fs::read_dir(folder_path)
+        .expect("failed to read mods folder")
+        .flatten()
+    {
+        let zip_name = entry.file_name();
+        match ModInfo::from_zip(&entry.path()) {
+            Ok(mod_info) => {
+                println!("parsed mod {} ", zip_name.display());
+                mods.push(mod_info);
             }
-            _ => {}
-        };
+            Err(e) => {
+                println!("failed mod {}: {:?}", zip_name.display(), e)
+            }
+        }
     }
 
     mods

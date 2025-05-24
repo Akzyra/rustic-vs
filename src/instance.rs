@@ -24,7 +24,7 @@ pub struct Instance {
 }
 
 #[derive(Debug)]
-pub enum Error {
+pub enum InstanceError {
     TomlMissing,
     TomlParseError,
 }
@@ -40,17 +40,19 @@ impl Instance {
         }
     }
 
-    pub fn load(folder_name: &OsStr) -> Result<Instance, Error> {
+    pub fn load(folder_name: &OsStr) -> Result<Instance, InstanceError> {
         let root = env::current_dir().expect("Failed to get CWD");
         let instance_path = root.join(INSTANCE_FOLDER).join(folder_name);
         let toml_path = instance_path.join(INSTANCE_TOML);
         let mods_path = instance_path.join(MODS_FOLDER);
 
-        toml_path.try_exists().map_err(|_| Error::TomlMissing)?;
-        let toml_data = std::fs::read_to_string(toml_path).map_err(|_| Error::TomlParseError)?;
+        toml_path
+            .try_exists()
+            .map_err(|_| InstanceError::TomlMissing)?;
+        let toml_data = fs::read_to_string(toml_path).map_err(|_| InstanceError::TomlParseError)?;
 
         let mut instance: Instance =
-            toml::from_str(&toml_data).map_err(|_| Error::TomlParseError)?;
+            toml::from_str(&toml_data).map_err(|_| InstanceError::TomlParseError)?;
 
         instance.folder_name = folder_name.to_os_string();
         instance.mods = load_mods(&mods_path);

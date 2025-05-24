@@ -36,6 +36,7 @@ struct Rustic {
     instance_name: String,
 }
 
+#[allow(clippy::enum_variant_names)]
 enum Modal {
     NewInstance,
     EditInstance(String),
@@ -235,9 +236,7 @@ impl Rustic {
         .height(Length::Fill);
 
         match &self.show_modal {
-            Some(Modal::ViewInstance) => {
-                ui::modal(content, ui::instance_view(&self), Message::None)
-            }
+            Some(Modal::ViewInstance) => ui::modal(content, ui::instance_view(self), Message::None),
             Some(Modal::NewInstance) => ui::modal(
                 content,
                 ui::instance_form(

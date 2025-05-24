@@ -24,7 +24,7 @@ pub fn load_icon(name: &Option<String>) -> image::Handle {
 pub fn form_text_input<'a, Message>(
     label: impl text::IntoFragment<'a>,
     placeholder: &str,
-    value: &String,
+    value: &str,
     on_input: impl Fn(String) -> Message + 'a,
     on_submit: Message,
 ) -> Row<'a, Message>
@@ -33,7 +33,7 @@ where
 {
     row![
         text(label),
-        text_input(placeholder, &value)
+        text_input(placeholder, value)
             .style(if value.trim().is_empty() {
                 style::text_input_warning
             } else {
@@ -48,7 +48,7 @@ where
 
 pub fn instance_form<'a, Message>(
     title: impl text::IntoFragment<'a>,
-    name_value: &'a String,
+    name_value: &'a str,
     name_on_input: impl Fn(String) -> Message + 'a,
     on_submit: Message,
     on_cancel: Message,
@@ -63,7 +63,7 @@ where
             form_text_input(
                 "Name:",
                 "<enter name>",
-                &name_value,
+                name_value,
                 name_on_input,
                 on_submit.clone()
             ),
