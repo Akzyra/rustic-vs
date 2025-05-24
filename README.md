@@ -3,13 +3,14 @@
 ~~Basic instance and mod manager for Vintage Story.~~   
 Just a basic, barely functional mockup for now.
 
-![screenshot](screenshot.png)
+![screenshot instances list (light)](screenshot.png)
+![screenshot mods table for instance (dark)](screenshot_mods.png)
 
 ## !! VERY WIP !!
-
 - [X] Mockup
 - [X] Instances
   - [X] Create and rename instances
+  - [X] Display mods
   - [ ] Edit/Delete instances
   - [ ] Icons and more config
 - [ ] Start the game via `--dataPath`

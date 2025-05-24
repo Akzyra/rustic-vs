@@ -97,7 +97,7 @@ pub fn instance_view(state: &Rustic) -> Container<crate::Message> {
             column![
                 text(instance.name.clone()).size(16),
                 row![
-                    text("X mods").size(12),
+                    text(format!("{} mods", instance.mods.len())).size(12),
                     text("•").size(12),
                     text(format!("Folder: {folder_name}")).size(12),
                 ]
@@ -118,11 +118,37 @@ pub fn instance_view(state: &Rustic) -> Container<crate::Message> {
         .spacing(10),
         horizontal_rule(1),
         scrollable(
-            column![text("TODO:"), text("add mod list"), text("and other stuff")]
-                .width(Length::Fill)
-                .padding(10)
-                .spacing(10)
+            column(
+                instance
+                    .mods
+                    .iter()
+                    .enumerate()
+                    .map(|(index, mod_info)| {
+                        container(if mod_info.name.is_empty() {
+                            row![
+                                text(mod_info.zip_name.to_string_lossy()).width(Length::Fill),
+                                text("<parse error>").size(12),
+                            ]
+                            .spacing(10)
+                            .align_y(Vertical::Top)
+                        } else {
+                            row![
+                                text(&mod_info.name).width(Length::FillPortion(1)),
+                                text(&mod_info.version).width(60),
+                                text(norm_str(&mod_info.description)).width(Length::FillPortion(2)),
+                            ]
+                            .spacing(10)
+                            .align_y(Vertical::Top)
+                        })
+                        .padding([5, 10])
+                        .style(style::striped(index))
+                    })
+                    .map(Element::from),
+            )
+            .width(Length::Fill)
+            .padding(10)
         )
+        .spacing(0)
     ])
     .width(Length::Fill)
     .style(style::rounded_container)
@@ -149,4 +175,8 @@ where
         )
     ]
     .into()
+}
+
+pub fn norm_str(str: &str) -> String {
+    str.replace("\t", "    ")
 }

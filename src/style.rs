@@ -5,7 +5,7 @@ pub fn rounded_container(theme: &Theme) -> container::Style {
     let palette = theme.extended_palette();
 
     container::Style {
-        background: Some(palette.background.weak.color.into()),
+        background: Some(palette.background.base.color.into()),
         border: Border {
             width: 1.0,
             radius: 5.into(),
@@ -43,7 +43,7 @@ pub fn model_backdrop(_theme: &Theme) -> container::Style {
                 a: 0.8,
                 ..Color::BLACK
             }
-                .into(),
+            .into(),
         ),
         ..container::Style::default()
     }
@@ -58,5 +58,20 @@ pub fn text_input_warning(theme: &Theme, status: text_input::Status) -> text_inp
             ..default.border
         },
         ..default
+    }
+}
+
+pub fn striped(index: usize) -> impl Fn(&Theme) -> container::Style {
+    if index % 2 == 0 {
+        container::transparent
+    } else {
+        move |theme: &Theme| {
+            let palette = theme.extended_palette();
+            if palette.is_dark {
+                container::background(palette.background.weak.color.scale_alpha(0.2))
+            } else {
+                container::background(palette.background.weak.color.scale_alpha(0.6))
+            }
+        }
     }
 }

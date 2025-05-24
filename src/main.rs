@@ -1,6 +1,7 @@
 mod api;
 mod instance;
 mod launcher;
+mod mods;
 mod style;
 mod ui;
 
@@ -199,7 +200,7 @@ impl Rustic {
                     Element::from(image(ui::load_icon(&instance.icon)).width(48).height(48)),
                     column![
                         text(instance.name.clone()).size(16),
-                        text("X mods").size(12),
+                        text(format!("{} mods", instance.mods.len())).size(12),
                     ]
                     .spacing(5),
                     horizontal_space(),
@@ -234,11 +235,9 @@ impl Rustic {
         .height(Length::Fill);
 
         match &self.show_modal {
-            Some(Modal::ViewInstance) => ui::modal(
-                content,
-                ui::instance_view(&self),
-                Message::None,
-            ),
+            Some(Modal::ViewInstance) => {
+                ui::modal(content, ui::instance_view(&self), Message::None)
+            }
             Some(Modal::NewInstance) => ui::modal(
                 content,
                 ui::instance_form(

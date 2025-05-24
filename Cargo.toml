@@ -9,5 +9,7 @@ readme = "README.md"
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
-reqwest = {version = "0.12", features = ["cookies", "json"]}
-iced = { version = "0.13", features = ["lazy", "image"]}
+json5 = "0.4"
+zip = "4.0.0"
+reqwest = { version = "0.12", features = ["cookies", "json"] }
+iced = { version = "0.13", features = ["lazy", "image"] }
