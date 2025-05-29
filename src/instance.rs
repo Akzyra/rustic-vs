@@ -1,3 +1,4 @@
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::ffi::{OsStr, OsString};
 use std::fs::create_dir_all;
@@ -105,16 +106,18 @@ pub fn load_instances() -> Vec<Instance> {
                 match Instance::load(&folder_name) {
                     Ok(instance) => {
                         instances.push(instance);
-                        println!("loaded instance {}", folder_name.display());
+                        debug!("loaded {}", folder_name.display());
                     }
                     Err(e) => {
-                        println!("failed instance {}: {:?}", folder_name.display(), e)
+                        debug!("failed {}: {:?}", folder_name.display(), e)
                     }
                 }
             }
             _ => {}
         }
     }
+
+    info!("loaded {} instances", instances.len());
 
     instances
 }

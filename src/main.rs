@@ -12,9 +12,28 @@ use iced::{
     Center, Element, Event, Length, Padding, Size, Subscription, Task, Theme, event, keyboard,
     widget,
 };
+use log::LevelFilter;
+use std::error::Error;
+use std::time::SystemTime;
 
-pub fn main() -> iced::Result {
-    iced::application("Rustic", Rustic::update, Rustic::view)
+pub fn main() -> Result<(), Box<dyn Error>> {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "[{} {} {}] {}",
+                humantime::format_rfc3339_seconds(SystemTime::now()),
+                record.level(),
+                record.target(),
+                message
+            ))
+        })
+        .level(LevelFilter::Error)
+        .level_for("rustic_vs", LevelFilter::Debug)
+        .chain(std::io::stdout())
+        .chain(fern::log_file("rustic-vs.log")?)
+        .apply()?;
+
+    Ok(iced::application("Rustic", Rustic::update, Rustic::view)
         .subscription(Rustic::subscription)
         .theme(|r: &Rustic| r.theme())
         .window(iced::window::Settings {
@@ -22,7 +41,7 @@ pub fn main() -> iced::Result {
             min_size: Some(Size::new(600.0, 450.0)),
             ..iced::window::Settings::default()
         })
-        .run()
+        .run()?)
 }
 
 struct Rustic {

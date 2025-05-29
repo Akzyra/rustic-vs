@@ -1,3 +1,4 @@
+use log::debug;
 use serde::Deserialize;
 use std::ffi::OsString;
 use std::fs;
@@ -77,11 +78,11 @@ pub fn load_mods(folder_path: &PathBuf) -> Vec<ModInfo> {
         let zip_name = entry.file_name();
         match ModInfo::from_zip(&entry.path()) {
             Ok(mod_info) => {
-                println!("parsed mod {} ", zip_name.display());
+                debug!("parsed {} ", zip_name.display());
                 mods.push(mod_info);
             }
             Err(e) => {
-                println!("failed mod {}: {:?}", zip_name.display(), e)
+                debug!("failed parsing {}: {:?}", zip_name.display(), e)
             }
         }
     }

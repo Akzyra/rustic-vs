@@ -7,6 +7,9 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
+log = "0.4"
+fern = "0.7"
+humantime = "2"
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 json5 = "0.4"
