@@ -1,3 +1,4 @@
+use crate::instance::Instance;
 use crate::{Rustic, style};
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{
@@ -86,36 +87,43 @@ where
     .style(style::rounded_container)
 }
 
+pub fn instance_row_base(instance: &Instance) -> Row<crate::Message> {
+    row![
+        Element::from(image(load_icon(&instance.icon)).width(48).height(48)),
+        column![
+            text(instance.name.clone()).size(16),
+            row![
+                text(format!("{} mods", instance.mods_count())).size(12),
+                text("•").size(12),
+                text(format!("Folder: {}", instance.folder_name_string())).size(12),
+            ]
+            .spacing(5)
+            .align_y(Vertical::Center)
+        ]
+        .spacing(5),
+    ]
+    .spacing(10)
+    .align_y(Vertical::Center)
+}
+
 pub fn instance_view(state: &Rustic) -> Container<crate::Message> {
     let index = state.selected_index.expect("modal open without selection");
     let instance = &state.instances[index];
-    let folder_name = instance.folder_name.to_string_lossy().to_string();
 
     container(column![
-        row![
-            Element::from(image(load_icon(&instance.icon)).width(48).height(48)),
-            column![
-                text(instance.name.clone()).size(16),
-                row![
-                    text(format!("{} mods", instance.mods.len())).size(12),
-                    text("•").size(12),
-                    text(format!("Folder: {folder_name}")).size(12),
-                ]
-                .spacing(5)
-                .align_y(Vertical::Center)
-            ]
-            .spacing(5),
-            horizontal_space(),
-            button("Edit")
-                .style(button::secondary)
-                .on_press(crate::Message::EditInstance(index)),
-            button("X")
-                .style(button::secondary)
-                .on_press(crate::Message::HideModal)
-        ]
-        .align_y(Vertical::Center)
-        .padding(10)
-        .spacing(10),
+        instance_row_base(instance)
+            .push(horizontal_space())
+            .push(
+                button("Edit")
+                    .style(button::secondary)
+                    .on_press(crate::Message::EditInstance(index))
+            )
+            .push(
+                button("X")
+                    .style(button::secondary)
+                    .on_press(crate::Message::HideModal)
+            )
+            .padding(10),
         horizontal_rule(1),
         scrollable(
             column(
@@ -145,6 +153,13 @@ pub fn instance_view(state: &Rustic) -> Container<crate::Message> {
                     })
                     .map(Element::from),
             )
+            .push_maybe(instance.mods.is_empty().then(|| {
+                text("no mods found")
+                    .height(50)
+                    .width(Length::Fill)
+                    .align_y(Vertical::Center)
+                    .align_x(Horizontal::Center)
+            }))
             .width(Length::Fill)
             .padding(10)
         )

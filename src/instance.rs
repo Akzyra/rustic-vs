@@ -23,6 +23,16 @@ pub struct Instance {
     pub game_exe_path: Option<PathBuf>,
 }
 
+impl Instance {
+    pub fn folder_name_string(&self) -> String {
+        self.folder_name.to_string_lossy().to_string()
+    }
+
+    pub fn mods_count(&self) -> usize {
+        self.mods.len()
+    }
+}
+
 #[derive(Debug)]
 pub enum InstanceError {
     TomlMissing,

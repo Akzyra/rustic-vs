@@ -6,11 +6,8 @@ mod style;
 mod ui;
 
 use crate::instance::{Instance, load_instances};
-use iced::alignment::Vertical;
 use iced::keyboard::key;
-use iced::widget::{
-    button, column, horizontal_rule, horizontal_space, image, row, scrollable, text,
-};
+use iced::widget::{button, column, horizontal_rule, horizontal_space, row, scrollable, stack};
 use iced::{
     Center, Element, Event, Length, Padding, Size, Subscription, Task, Theme, event, keyboard,
     widget,
@@ -197,25 +194,9 @@ impl Rustic {
 
         let instance_widgets = self.instances.iter().enumerate().map(|(index, instance)| {
             button(
-                row![
-                    Element::from(image(ui::load_icon(&instance.icon)).width(48).height(48)),
-                    column![
-                        text(instance.name.clone()).size(16),
-                        text(format!("{} mods", instance.mods.len())).size(12),
-                    ]
-                    .spacing(5),
-                    horizontal_space(),
-                    row![
-                        button("Mods").style(button::secondary),
-                        button("Edit")
-                            .style(button::secondary)
-                            .on_press(Message::EditInstance(index)),
-                        button("Play").style(button::primary),
-                    ]
-                    .spacing(5)
-                ]
-                .spacing(10)
-                .align_y(Vertical::Center),
+                ui::instance_row_base(instance)
+                    .push(horizontal_space())
+                    .push(button("Play").style(button::primary)),
             )
             .style(style::instance_button)
             .width(Length::Fill)
@@ -259,7 +240,7 @@ impl Rustic {
                 ),
                 Message::None,
             ),
-            None => content.into(),
+            None => stack![content].into(),
         }
     }
 }
