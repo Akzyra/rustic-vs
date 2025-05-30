@@ -1,6 +1,6 @@
 use crate::mods::{ModInfo, load_mods};
 use filenamify::filenamify;
-use log::{debug, info};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::ffi::{OsStr, OsString};
 use std::fs::create_dir_all;
@@ -91,33 +91,40 @@ impl Instance {
 }
 
 pub fn load_instances() -> Vec<Instance> {
-    let mut instances = Vec::new();
-
     let root = env::current_dir().expect("Failed to get CWD");
     let instances_folder = root.join(INSTANCE_FOLDER);
-    create_dir_all(&instances_folder).expect("failed to ensure instances folder");
 
-    println!("loading from {}", instances_folder.display());
-
-    for entry in fs::read_dir(instances_folder).expect("Failed to read INSTANCE_FOLDER") {
-        match entry {
-            Ok(entry) if entry.path().is_dir() => {
-                let folder_name = entry.file_name();
-                match Instance::load(&folder_name) {
-                    Ok(instance) => {
-                        instances.push(instance);
-                        debug!("loaded {}", folder_name.display());
-                    }
-                    Err(e) => {
-                        debug!("failed {}: {:?}", folder_name.display(), e)
-                    }
-                }
-            }
-            _ => {}
-        }
+    if let Err(e) = create_dir_all(&instances_folder) {
+        debug!("failed to ensure instances folder: {}", e);
+        return Vec::new();
     }
 
-    info!("loaded {} instances", instances.len());
+    let instances: Result<Vec<_>, _> = instances_folder.read_dir().map(|read_dir| {
+        read_dir
+            .flatten()
+            .filter(|entry| entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false))
+            .map(|folder_entry| folder_entry.file_name())
+            .flat_map(|folder_name| match Instance::load(&folder_name) {
+                Ok(instance) => {
+                    debug!("loaded {}", folder_name.display());
+                    Some(instance)
+                }
+                Err(e) => {
+                    error!("failed loading {}: {:?}", folder_name.display(), e);
+                    None
+                }
+            })
+            .collect()
+    });
 
-    instances
+    match instances {
+        Ok(instances) => {
+            info!("loaded {} instances", instances.len());
+            instances
+        }
+        Err(e) => {
+            error!("failed reading instances folder: {}", e);
+            Vec::new()
+        }
+    }
 }

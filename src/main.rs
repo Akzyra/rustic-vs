@@ -1,10 +1,12 @@
 mod api;
+mod icons;
 mod instance;
 mod launcher;
 mod mods;
 mod style;
 mod ui;
 
+use crate::icons::load_icons;
 use crate::instance::{Instance, load_instances};
 use iced::keyboard::key;
 use iced::widget::{button, column, horizontal_rule, horizontal_space, row, scrollable, stack};
@@ -14,6 +16,7 @@ use iced::{
 };
 use log::LevelFilter;
 use std::error::Error;
+use std::ffi::OsString;
 use std::time::SystemTime;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -44,9 +47,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         .run()?)
 }
 
+#[allow(dead_code)]
 struct Rustic {
     dark: bool,
     instances: Vec<Instance>,
+    icons: Vec<OsString>,
     selected_index: Option<usize>,
     show_modal: Option<Modal>,
     instance_name: String,
@@ -83,6 +88,7 @@ impl Default for Rustic {
         Self {
             dark: true,
             instances: load_instances(),
+            icons: load_icons(),
             selected_index: None,
             show_modal: None,
             instance_name: String::new(),

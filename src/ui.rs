@@ -1,3 +1,4 @@
+use crate::icons::load_icon;
 use crate::instance::Instance;
 use crate::{Rustic, style};
 use iced::alignment::{Horizontal, Vertical};
@@ -7,20 +8,6 @@ use iced::widget::{
 };
 use iced::{Element, Length};
 use std::convert::Into;
-use std::env;
-
-pub const DEFAULT_ICON: &[u8] = include_bytes!("../assets/default.png");
-
-pub fn load_icon(name: &Option<String>) -> image::Handle {
-    if let Some(name) = name {
-        let root = env::current_dir().expect("Failed to get CWD");
-        let path = root.join("icons").join(name);
-        if path.is_file() {
-            return path.strip_prefix(root).expect("failed rel path").into();
-        }
-    }
-    image::Handle::from_bytes(DEFAULT_ICON)
-}
 
 pub fn form_text_input<'a, Message>(
     label: impl text::IntoFragment<'a>,
