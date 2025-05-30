@@ -1,11 +1,11 @@
+use crate::mods::{ModInfo, load_mods};
+use filenamify::filenamify;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::ffi::{OsStr, OsString};
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::{env, fs};
-
-use crate::mods::{ModInfo, load_mods};
 
 const INSTANCE_FOLDER: &str = "instances";
 const INSTANCE_TOML: &str = "instance.toml";
@@ -43,7 +43,7 @@ pub enum InstanceError {
 impl Instance {
     pub fn new(name: &str) -> Instance {
         Self {
-            folder_name: name.into(),
+            folder_name: filenamify(name).into(),
             name: name.to_string(),
             icon: None,
             game_exe_path: None,
