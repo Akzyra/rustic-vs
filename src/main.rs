@@ -16,7 +16,6 @@ use iced::{
 };
 use log::LevelFilter;
 use std::error::Error;
-use std::ffi::OsString;
 use std::time::SystemTime;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -51,8 +50,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 struct Rustic {
     dark: bool,
     instances: Vec<Instance>,
-    icons: Vec<OsString>,
+    icons: Vec<String>,
     selected_index: Option<usize>,
+    selected_icon: Option<String>,
     show_modal: Option<Modal>,
     instance_name: String,
 }
@@ -81,6 +81,7 @@ pub enum Message {
     EditInstanceSubmit,
     // form fields
     InstanceName(String),
+    IconSelected(String),
 }
 
 impl Default for Rustic {
@@ -90,6 +91,7 @@ impl Default for Rustic {
             instances: load_instances(),
             icons: load_icons(),
             selected_index: None,
+            selected_icon: None,
             show_modal: None,
             instance_name: String::new(),
         }
@@ -160,16 +162,22 @@ impl Rustic {
             Message::NewInstanceSubmit => {
                 let cleaned_name = self.instance_name.trim();
                 if !cleaned_name.is_empty() {
-                    let new_instance = Instance::new(cleaned_name);
+                    let mut new_instance = Instance::new(cleaned_name);
+                    new_instance.icon = self.selected_icon.clone();
+
                     new_instance.save();
                     self.instances.push(new_instance);
                     self.hide_modal();
+
+                    self.selected_index = None;
+                    self.selected_icon = None;
                 }
                 Task::none()
             }
             Message::EditInstance(index) => {
                 self.selected_index = Some(index);
                 self.instance_name = self.instances[index].name.clone();
+                self.selected_icon = self.instances[index].icon.clone();
                 self.show_modal = Some(Modal::EditInstance(self.instance_name.clone()));
                 Task::none()
             }
@@ -179,9 +187,13 @@ impl Rustic {
                     if let Some(index) = self.selected_index {
                         if let Some(instance) = self.instances.get_mut(index) {
                             instance.name = cleaned_name.to_string();
+                            instance.icon = self.selected_icon.clone();
+
                             instance.save();
                             self.hide_modal();
+
                             self.selected_index = None;
+                            self.selected_icon = None;
                         }
                     }
                 }
@@ -190,6 +202,10 @@ impl Rustic {
             // forms
             Message::InstanceName(name) => {
                 self.instance_name = name;
+                Task::none()
+            }
+            Message::IconSelected(name) => {
+                self.selected_icon = Some(name);
                 Task::none()
             }
         }
@@ -246,22 +262,20 @@ impl Rustic {
             Some(Modal::NewInstance) => ui::modal(
                 content,
                 ui::instance_form(
+                    self,
                     "Create new instance",
-                    &self.instance_name,
                     Message::InstanceName,
                     Message::NewInstanceSubmit,
-                    Message::HideModal,
                 ),
                 Message::None,
             ),
             Some(Modal::EditInstance(instance_name)) => ui::modal(
                 content,
                 ui::instance_form(
+                    self,
                     format!("Edit instance: {}", instance_name),
-                    &self.instance_name,
                     Message::InstanceName,
                     Message::EditInstanceSubmit,
-                    Message::HideModal,
                 ),
                 Message::None,
             ),

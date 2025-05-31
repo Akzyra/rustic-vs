@@ -1,7 +1,6 @@
 use iced::widget::image;
 use log::{debug, error, info};
 use std::env;
-use std::ffi::OsString;
 use std::fs::create_dir_all;
 
 pub const DEFAULT_ICON: &[u8] = include_bytes!("../assets/default.png");
@@ -18,7 +17,7 @@ pub fn load_icon(name: &Option<String>) -> image::Handle {
     image::Handle::from_bytes(DEFAULT_ICON)
 }
 
-pub fn load_icons() -> Vec<OsString> {
+pub fn load_icons() -> Vec<String> {
     let root = env::current_dir().expect("Failed to get CWD");
     let icons_folder = root.join(ICONS_FOLDER);
 
@@ -32,6 +31,7 @@ pub fn load_icons() -> Vec<OsString> {
             .flatten()
             .filter(|entry| entry.file_type().map(|e| e.is_file()).unwrap_or(false))
             .map(|file_entry| file_entry.file_name())
+            .flat_map(|file_name| file_name.to_str().map(String::from))
             .collect()
     });
 

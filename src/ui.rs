@@ -1,10 +1,10 @@
 use crate::icons::load_icon;
 use crate::instance::Instance;
-use crate::{Rustic, style};
+use crate::{Message, Rustic, style};
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{
     Container, Row, button, center, column, container, horizontal_rule, horizontal_space, image,
-    mouse_area, opaque, row, scrollable, stack, text, text_input,
+    mouse_area, opaque, radio, row, scrollable, stack, text, text_input,
 };
 use iced::{Element, Length};
 use std::convert::Into;
@@ -19,8 +19,8 @@ pub fn form_text_input<'a, Message>(
 where
     Message: Clone + 'a,
 {
-    row![
-        text(label),
+    form_row(
+        label,
         text_input(placeholder, value)
             .style(if value.trim().is_empty() {
                 style::text_input_warning
@@ -28,22 +28,31 @@ where
                 text_input::default
             })
             .on_input(on_input)
-            .on_submit(on_submit),
-    ]
+            .on_submit(on_submit)
+            .into(),
+    )
     .spacing(10)
     .align_y(Vertical::Center)
 }
 
-pub fn instance_form<'a, Message>(
-    title: impl text::IntoFragment<'a>,
-    name_value: &'a str,
-    name_on_input: impl Fn(String) -> Message + 'a,
-    on_submit: Message,
-    on_cancel: Message,
-) -> Container<'a, Message>
+pub fn form_row<'a, Message>(
+    label: impl text::IntoFragment<'a>,
+    widget: Element<'a, Message>,
+) -> Row<'a, Message>
 where
     Message: Clone + 'a,
 {
+    row![text(label).width(60), widget]
+        .spacing(10)
+        .align_y(Vertical::Center)
+}
+
+pub fn instance_form<'a>(
+    state: &Rustic,
+    title: impl text::IntoFragment<'a>,
+    name_on_input: impl Fn(String) -> Message + 'a,
+    on_submit: Message,
+) -> Container<'a, Message> {
     container(column![
         row![text(title).size(20)].padding(10).spacing(10),
         horizontal_rule(1),
@@ -51,10 +60,36 @@ where
             form_text_input(
                 "Name:",
                 "<enter name>",
-                name_value,
+                &state.instance_name,
                 name_on_input,
                 on_submit.clone()
             ),
+            form_row(
+                "Icon:",
+                scrollable(
+                    column(state.icons.clone().into_iter().map(|icon| {
+                        radio(
+                            icon.to_string(),
+                            &icon,
+                            state.selected_icon.clone().as_ref(),
+                            |s| Message::IconSelected(s.to_string()),
+                        )
+                        .into()
+                    }))
+                    .spacing(5)
+                    .padding(5)
+                )
+                .style(|t, s| {
+                    scrollable::Style {
+                        container: style::rounded_container(t),
+                        ..scrollable::default(t, s)
+                    }
+                })
+                .spacing(5)
+                .width(Length::Fill)
+                .into()
+            )
+            .height(75),
             row![
                 horizontal_space(),
                 button(text("OK").align_x(Horizontal::Center))
@@ -63,7 +98,7 @@ where
                 button(text("Cancel").align_x(Horizontal::Center))
                     .width(90)
                     .style(button::secondary)
-                    .on_press(on_cancel),
+                    .on_press(Message::HideModal),
             ]
             .spacing(10)
         ]
