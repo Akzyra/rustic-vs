@@ -1,4 +1,4 @@
-Rustic 
+Rustic
 ![status](https://img.shields.io/badge/Status-Mockup-red?style=for-the-badge)
 [![license](https://img.shields.io/github/license/akzyra/rustic-vs?style=for-the-badge)](LICENSE)
 ===========
@@ -10,12 +10,13 @@ Just a basic, barely functional mockup for now.
 ![screenshot mods table for instance (dark)](screenshot_mods.png)
 
 ## !! VERY WIP !!
+
 - [X] Mockup
 - [X] Instances
-  - [X] Create and rename instances
+  - [X] Create and edit instances
   - [X] Display mods
-  - [ ] Edit/Delete instances
-  - [ ] Icons and more config
+  - [X] Custom icons from icons folder
+  - [ ] Delete instances *(maybe move to trash or flag as deleted?)*
 - [ ] Start the game via `--dataPath`
 - [ ] Launcher settings
 - [ ] Mod DB
