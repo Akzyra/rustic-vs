@@ -6,8 +6,5 @@
 
 *.log
 
-icons/*
-!icons/reshot-tree.png
-
-instances/*
-!instances/mock*
+/installs
+/instances
