@@ -1,21 +1,30 @@
+use std::path::PathBuf;
+
 use freya::prelude::*;
 
-use crate::core::install::Install;
-use crate::core::instance::Instance;
+use crate::core::install::{Install, load_installs};
+use crate::core::instance::{Instance, load_instances};
 
 #[derive(PartialEq)]
 pub struct Rustic {
+    pub cwd: PathBuf,
     pub installs: Vec<Install>,
     pub instances: Vec<Instance>,
     pub selected_instance: usize,
 }
 impl Rustic {
-    pub fn new() -> Self {
+    pub fn new(cwd: PathBuf) -> Self {
         Self {
+            cwd,
             installs: Vec::new(),
             instances: Vec::new(),
             selected_instance: 0,
         }
+    }
+
+    pub fn reload(&mut self) {
+        self.installs = load_installs(&self.cwd);
+        self.instances = load_instances(&self.cwd);
     }
 }
 impl App for Rustic {
