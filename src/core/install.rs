@@ -12,7 +12,7 @@ const GAME_DLL: &str = "Vintagestory.dll";
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Install {
     pub id: String,
-    pub version: Option<String>,
+    pub game_version: Option<String>,
 }
 
 #[derive(Error, Debug)]
@@ -30,7 +30,7 @@ impl Install {
     pub fn new(id: String) -> Self {
         Self {
             id: filenamify(&id),
-            version: None,
+            game_version: None,
         }
     }
 

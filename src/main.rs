@@ -19,13 +19,9 @@ fn main() -> Result<(), fern::InitError> {
         .chain(fern::log_file("rustic.log")?)
         .apply()?;
 
-    let cwd = std::env::current_dir().expect("how can there be no CWD");
-    let mut app = ui::Rustic::new(cwd);
-    app.reload();
-
     Ok(launch(
         LaunchConfig::new().with_window(
-            WindowConfig::new_app(app)
+            WindowConfig::new(ui::app)
                 .with_min_size(600.0, 450.0)
                 .with_title("Rustic VS"),
         ),
