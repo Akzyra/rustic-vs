@@ -22,7 +22,7 @@ fn main() -> Result<(), fern::InitError> {
     Ok(launch(
         LaunchConfig::new().with_window(
             WindowConfig::new(ui::app)
-                .with_min_size(600.0, 450.0)
+                .with_min_size(750.0, 500.0)
                 .with_title("Rustic VS"),
         ),
     ))

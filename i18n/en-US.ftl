@@ -7,13 +7,15 @@ menu_instances = Instances
 menu_instances_tt = Manage instances and settings
 menu_settings = Settings
 menu_settings_tt = Rustic launcher settings
-menu_management = Management
-menu_management_tt = Manage mods of active instance
+menu_instance_edit = Management
+menu_instance_edit_tt = Manage mods of active instance
 
 # general
 active_instance = Active Instance
 play = Play {$name}
 
+# page: news
+news_header = Vintage Story RSS Newsfeed
 
 # page: installs
 installs_header = Installed VS Versions
@@ -33,3 +35,6 @@ settings_header = Rustic Settings
 settings_theme = Theme
 settings_theme_dark = Dark
 settings_theme_light = Light
+
+# page: instance_edit
+instance_edit_header = Current: {$name}

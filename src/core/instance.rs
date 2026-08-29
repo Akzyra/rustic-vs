@@ -13,7 +13,7 @@ const CONFIG_NAME: &str = "instance.json5";
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Instance {
-    #[serde(skip_serializing)]
+    #[serde(skip)]
     pub id: String,
 
     pub name: String,
@@ -56,7 +56,8 @@ impl Instance {
         let id = dir_name_str.to_string();
 
         // parse config
-        if let Ok(json) = std::fs::read_to_string(dir_path.join(CONFIG_NAME)) {
+        let config_path = dir_path.join(CONFIG_NAME);
+        if let Ok(json) = std::fs::read_to_string(&config_path) {
             if let Ok(mut inst) = json5::from_str::<Instance>(&json) {
                 // attach non serialized data
                 inst.id = id;
@@ -69,8 +70,16 @@ impl Instance {
         }
 
         // fallback: re-create information as best as possible
-        //TODO: save config, keep backup?
-        Ok(Instance::new(id))
+        //TODO: keep backup of bad file? what if backup already exists?
+
+        let instance = Instance::new(id);
+        json5::to_string(&instance)
+            .and_then(|json| {
+                std::fs::write(&config_path, json).expect("write json works");
+                Ok(())
+            })
+            .expect("serde works");
+        Ok(instance)
     }
 }
 
