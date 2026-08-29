@@ -4,11 +4,13 @@ use std::hash::Hash;
 
 use crate::core::install::{Install, load_installs};
 use crate::core::instance::{Instance, load_instances};
+use crate::core::rss::load_news_feed;
 use crate::ui::components::*;
 use freya::i18n::*;
 use freya::icons;
 use freya::prelude::*;
 use freya::router::*;
+use rss::Channel;
 
 pub fn app() -> impl IntoElement {
     use_init_i18n(|| {
@@ -156,7 +158,40 @@ struct News;
 
 impl Component for News {
     fn render(&self) -> impl IntoElement {
-        main_rect(t!("news_header")).child("TODO: add this..")
+        // TODO: reload everytime route to this, cache it?
+        let future = use_future(move || async move {
+            if let Ok(channel) = load_news_feed().await {
+                channel
+            } else {
+                Channel::default()
+            }
+        });
+
+        main_rect(t!("news_header")).child(match &*future.state() {
+            FutureState::Pending => label().text("Pending...").into_element(),
+            FutureState::Loading => label().text("Loading...").into_element(),
+            FutureState::Fulfilled(channel) => ScrollView::new()
+                .width(Size::Fill)
+                .spacing(SPACING_MD)
+                .children(channel.items.clone().into_iter().flat_map(|item| {
+                    let Some(title) = item.title else {
+                        return None;
+                    };
+                    let Some(link) = item.link else {
+                        return None;
+                    };
+                    let Some(date) = item.pub_date else {
+                        return None;
+                    };
+
+                    let short_date = chrono::DateTime::parse_from_rfc2822(&*date)
+                        .map(|dt| format!("{}", dt.format("%Y-%m-%d")))
+                        .unwrap_or(date);
+
+                    Some(rss_row(title, short_date, link).into_element())
+                }))
+                .into_element(),
+        })
     }
 }
 

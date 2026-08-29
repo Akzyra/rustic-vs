@@ -69,3 +69,20 @@ pub fn sidebar_link(
     )
     .exact(true)
 }
+
+pub fn rss_row(title: String, date: String, link: String) -> impl IntoElement {
+    Link::new(link).child(
+        Button::new().width(Size::Fill).outline().child(
+            rect()
+                .content(Content::Flex)
+                .horizontal()
+                .child(
+                    label()
+                        .text(title)
+                        .font_weight(FontWeight::BOLD)
+                        .width(Size::flex(1.0)),
+                )
+                .child(label().text(date)),
+        ),
+    )
+}

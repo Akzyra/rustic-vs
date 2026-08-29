@@ -1,9 +1,9 @@
 use freya::prelude::{LaunchConfig, WindowConfig, launch};
-
 mod core;
 mod ui;
 
-fn main() -> Result<(), fern::InitError> {
+#[tokio::main]
+async fn main() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
