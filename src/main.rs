@@ -2,6 +2,8 @@ use freya::prelude::{LaunchConfig, WindowConfig, launch};
 mod core;
 mod ui;
 
+const ICON: &[u8] = include_bytes!("../assets/temp.png");
+
 #[tokio::main]
 async fn main() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
@@ -23,6 +25,7 @@ async fn main() -> Result<(), fern::InitError> {
         LaunchConfig::new().with_window(
             WindowConfig::new(ui::app)
                 .with_min_size(750.0, 500.0)
+                .with_icon(LaunchConfig::window_icon(ICON))
                 .with_title("Rustic VS"),
         ),
     ))
