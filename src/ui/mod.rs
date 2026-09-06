@@ -5,12 +5,23 @@ use std::hash::Hash;
 use crate::core::install::{Install, load_installs};
 use crate::core::instance::{Instance, load_instances};
 use crate::core::rss::load_news_feed;
+use crate::core::settings::Settings as SettingsStruct;
+use crate::core::settings::THEMES;
+use crate::core::settings::Theme;
+use crate::core::settings::load_settings;
 use crate::ui::components::*;
 use freya::i18n::*;
 use freya::icons;
 use freya::prelude::*;
 use freya::router::*;
 use rss::Channel;
+
+fn get_theme(theme: &Theme) -> freya::prelude::Theme {
+    match theme {
+        Theme::Light => light_theme(),
+        Theme::Dark => dark_theme(),
+    }
+}
 
 pub fn app() -> impl IntoElement {
     use_init_i18n(|| {
@@ -19,10 +30,12 @@ pub fn app() -> impl IntoElement {
             include_str!("../../i18n/en-US.ftl"),
         ))
     });
-
-    use_init_theme(light_theme); // TODO: read/write settings file
-
     let cwd = std::env::current_dir().expect("CWD must exist");
+    let settings = load_settings(&cwd);
+
+    use_init_theme(|| get_theme(&settings.theme));
+
+    use_provide_context(|| State::create(settings));
     use_provide_context(|| State::create(load_installs(&cwd)));
     use_provide_context(|| State::create(load_instances(&cwd)));
 
@@ -285,18 +298,33 @@ struct Settings;
 
 impl Component for Settings {
     fn render(&self) -> impl IntoElement {
+        let mut settings = use_consume::<State<SettingsStruct>>();
         let mut theme = use_theme();
-        let is_light = theme.read().name == "light";
 
-        main_rect(t!("settings_header")).child(rect().child(t!("settings_theme")).child(
-            Switch::new().toggled(is_light).on_toggle(move |_| {
-                theme.set(if is_light {
-                    dark_theme()
-                } else {
-                    light_theme()
-                });
-            }),
-        ))
+        let current_name = theme.read().name;
+
+        main_rect(t!("settings_header")).child(
+            rect().child(t!("settings_theme")).child(
+                Select::new()
+                    .width(Size::flex(1.0))
+                    .selected_item(current_name)
+                    .children(THEMES.into_iter().map(|t| {
+                        let ft = get_theme(&t.clone());
+                        let name = ft.name;
+
+                        MenuItem::new()
+                            .selected(name == current_name)
+                            .on_press(move |_| {
+                                let t = t.clone();
+                                theme.set(get_theme(&t));
+                                settings.write().theme = t;
+                                settings.read().save();
+                            })
+                            .child(name)
+                            .into()
+                    })),
+            ),
+        )
     }
 }
 
