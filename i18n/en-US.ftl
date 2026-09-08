@@ -22,6 +22,7 @@ installs_header = Installed VS Versions
 installs_column_id = Install ID
 installs_column_version = VS Version
 installs_column_actions = Actions
+add_install = Add Version
 
 # page: instances
 instances_header = Instance List
@@ -29,6 +30,7 @@ instances_column_id = Instance ID
 instances_column_name = Instance Name
 instances_column_install = Install ID
 instances_column_actions = Actions
+add_instance = Add Instance
 
 # page: settings_header
 settings_header = Rustic Settings

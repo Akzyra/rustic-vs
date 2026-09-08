@@ -19,6 +19,13 @@ pub fn main_rect(header: String) -> Rect {
         )
 }
 
+pub fn flex_rect(direction: Direction, spacing: f32) -> Rect {
+    rect()
+        .content(Content::Flex)
+        .direction(direction)
+        .spacing(spacing)
+}
+
 pub fn tool_tipped_pos(
     tooltip: String,
     pos: AttachedPosition,
