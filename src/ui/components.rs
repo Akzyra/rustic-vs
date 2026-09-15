@@ -31,7 +31,7 @@ pub fn tool_tipped_pos(
     pos: AttachedPosition,
     child: impl IntoElement,
 ) -> TooltipContainer {
-    TooltipContainer::new(Tooltip::new(tooltip))
+    TooltipContainer::new(Tooltip::new().child(tooltip))
         .position(pos)
         .child(child)
 }

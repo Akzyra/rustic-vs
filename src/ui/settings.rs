@@ -39,7 +39,6 @@ impl Component for Settings {
                             settings.read().save();
                         })
                         .child(name)
-                        .into()
                 })),
         ))
     }

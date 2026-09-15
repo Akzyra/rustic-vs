@@ -7,15 +7,15 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
-log = "0.4.34"
-fern = "0.7.1"
-humantime = "2.4.0"
-thiserror = "2.0.20"
+log = "0.4"
+fern = "0.7"
+humantime = "2"
+thiserror = "2"
 filenamify = "0.1.2"
-freya = { version = "0.4", features = ["i18n", "router", "icons-lucide"] }
-serde = { version = "1.0", features = ["derive"] }
-json5 = "1.3.1"
-rss = "2.1.0"
-reqwest = "0.13.4"
+freya = { version = "0.5.0-rc.6", features = ["i18n", "router", "icons-lucide"] }
+serde = { version = "1", features = ["derive"] }
+json5 = "1.3"
+rss = "2.1"
+reqwest = "0.13"
 tokio = { version = "1", features = ["full"] }
-chrono = "0.4.45"
+chrono = "0.4"

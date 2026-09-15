@@ -59,7 +59,6 @@ impl Component for Instances {
                                     ),
                                 )
                                 .child(TableCell::new().child("todo"))
-                                .into()
                         }),
                     ))),
             )

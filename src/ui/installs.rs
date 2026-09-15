@@ -52,7 +52,6 @@ impl Component for Installs {
                                     ),
                                 )
                                 .child(TableCell::new().child("todo"))
-                                .into()
                         }),
                     ))),
             )

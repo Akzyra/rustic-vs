@@ -121,7 +121,6 @@ impl Component for Layout {
                                         };
                                     })
                                     .child(inst.name.clone())
-                                    .into()
                             })),
                     )
                     .child(sidebar_link(
