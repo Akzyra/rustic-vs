@@ -26,6 +26,22 @@ pub fn flex_rect(direction: Direction, spacing: f32) -> Rect {
         .spacing(spacing)
 }
 
+/// TableCell hardcodes end/right alignment for cell content.
+/// Fixed with a full width controllable rect.
+pub fn table_cell_fix(
+    main_align: Alignment,
+    child: impl IntoElement,
+) -> TableCell {
+    TableCell::new().child(
+        rect()
+            .content(Content::Flex)
+            .direction(Direction::Horizontal)
+            .width(Size::fill())
+            .main_align(main_align)
+            .child(child),
+    )
+}
+
 pub fn tool_tipped_pos(
     tooltip: String,
     pos: AttachedPosition,

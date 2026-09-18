@@ -39,7 +39,10 @@ impl Component for Instances {
                         TableHead::new().child(
                             TableRow::new()
                                 .child(TableCell::new().child(t!("instances_column_id")))
-                                .child(TableCell::new().child(t!("instances_column_name")))
+                                .child(table_cell_fix(
+                                    Alignment::Start,
+                                    t!("instances_column_name"),
+                                ))
                                 .child(TableCell::new().child(t!("instances_column_install")))
                                 .child(TableCell::new().child(t!("instances_column_actions"))),
                         ),
@@ -49,7 +52,7 @@ impl Component for Instances {
                             TableRow::new()
                                 .key(i)
                                 .child(TableCell::new().child(instance.id.clone()))
-                                .child(TableCell::new().child(instance.name.clone()))
+                                .child(table_cell_fix(Alignment::Start, instance.name.clone()))
                                 .child(
                                     TableCell::new().child(
                                         instance
