@@ -29,16 +29,35 @@ pub enum InstanceError {
 
     #[error("Instance path has bad name: {0:?}")]
     BadDirName(OsString),
+
+    #[error("Failed to create instance dir: {0}")]
+    CreateDir(#[source] std::io::Error),
+
+    #[error("Failed to serialize instance config: {0}")]
+    Serialize(#[source] json5::Error),
+
+    #[error("Failed to write instance config: {0}")]
+    WriteConfig(#[source] std::io::Error),
 }
 
 impl Instance {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, install_id: Option<String>) -> Self {
         let id = filenamify(&name);
         Self {
             id,
             name,
-            install_id: None,
+            install_id,
         }
+    }
+
+    pub fn save_to_dir(&self, cwd: &Path) -> Result<(), InstanceError> {
+        let dir_path = cwd.join(DIR_NAME).join(&self.id);
+        std::fs::create_dir_all(&dir_path).map_err(InstanceError::CreateDir)?;
+
+        let config_path = dir_path.join(CONFIG_NAME);
+        let json = json5::to_string(self).map_err(InstanceError::Serialize)?;
+        std::fs::write(&config_path, json).map_err(InstanceError::WriteConfig)?;
+        Ok(())
     }
 
     pub fn load_from_dir(cwd: &Path, dir_name: &OsStr) -> Result<Instance, InstanceError> {
@@ -72,11 +91,10 @@ impl Instance {
         // fallback: re-create information as best as possible
         //TODO: keep backup of bad file? what if backup already exists?
 
-        let instance = Instance::new(id);
+        let instance = Instance::new(id, None);
         json5::to_string(&instance)
-            .and_then(|json| {
+            .map(|json| {
                 std::fs::write(&config_path, json).expect("write json works");
-                Ok(())
             })
             .expect("serde works");
         Ok(instance)

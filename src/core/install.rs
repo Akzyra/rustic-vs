@@ -8,6 +8,9 @@ use thiserror::Error;
 
 const DIR_NAME: &str = "installs";
 const GAME_DLL: &str = "Vintagestory.dll";
+const ASSETS: &str = "assets";
+const VERSION_PREFIX: &str = "version-";
+const VERSION_SUFFIX: &str = ".txt";
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Install {
@@ -27,13 +30,6 @@ pub enum InstallError {
     MissingFile(String),
 }
 impl Install {
-    pub fn new(id: String) -> Self {
-        Self {
-            id: filenamify(&id),
-            game_version: None,
-        }
-    }
-
     pub fn load_from_dir(cwd: &Path, dir_name: &OsStr) -> Result<Install, InstallError> {
         let dir_path = cwd.join(DIR_NAME).join(dir_name);
 
@@ -51,10 +47,25 @@ impl Install {
         }
 
         let id = dir_name_str.to_string();
-        //TODO: detect version from version-<VER>.txt
+        let game_version = get_game_version(dir_path.as_path());
 
-        Ok(Install::new(id))
+        Ok(Install { id, game_version })
     }
+}
+
+fn get_game_version(path: &Path) -> Option<String> {
+    path.join(ASSETS).read_dir().ok().and_then(|read_dir| {
+        read_dir
+            .flatten()
+            .filter(|e| e.file_type().map(|ft| ft.is_file()).unwrap_or(false))
+            .map(|e| e.file_name())
+            .flat_map(|file_name| file_name.into_string())
+            .find_map(|file_name| {
+                file_name
+                    .strip_circumfix(VERSION_PREFIX, VERSION_SUFFIX)
+                    .map(String::from)
+            })
+    })
 }
 
 pub fn load_installs(cwd: &Path) -> Vec<Install> {

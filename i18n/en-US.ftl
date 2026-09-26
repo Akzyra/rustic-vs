@@ -13,6 +13,7 @@ menu_instance_edit_tt = Manage mods of active instance
 # general
 active_instance = Active Instance
 play = Play {$name}
+cancel = Cancel
 
 # page: news
 news_header = Vintage Story RSS Newsfeed
@@ -31,6 +32,9 @@ instances_column_name = Instance Name
 instances_column_install = Install ID
 instances_column_actions = Actions
 add_instance = Add Instance
+add_instance_title = New Instance
+add_instance_name = Instance name
+add_instance_create = Create
 
 # page: settings_header
 settings_header = Rustic Settings

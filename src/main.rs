@@ -21,12 +21,14 @@ async fn main() -> Result<(), fern::InitError> {
         .chain(fern::log_file("rustic.log")?)
         .apply()?;
 
-    Ok(launch(
+    launch(
         LaunchConfig::new().with_window(
             WindowConfig::new(ui::app)
                 .with_min_size(750.0, 500.0)
                 .with_icon(LaunchConfig::window_icon(ICON))
                 .with_title("Rustic VS"),
         ),
-    ))
+    );
+
+    Ok(())
 }

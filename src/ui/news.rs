@@ -25,15 +25,9 @@ impl Component for News {
                 .width(Size::Fill)
                 .spacing(SPACING_MD)
                 .children(channel.items.clone().into_iter().flat_map(|item| {
-                    let Some(title) = item.title else {
-                        return None;
-                    };
-                    let Some(link) = item.link else {
-                        return None;
-                    };
-                    let Some(date) = item.pub_date else {
-                        return None;
-                    };
+                    let title = item.title?;
+                    let link = item.link?;
+                    let date = item.pub_date?;
 
                     let short_date = chrono::DateTime::parse_from_rfc2822(&*date)
                         .map(|dt| format!("{}", dt.format("%Y-%m-%d")))

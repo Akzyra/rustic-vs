@@ -26,7 +26,7 @@ impl Component for Settings {
             Select::new()
                 .width(Size::flex(1.0))
                 .selected_item(current_name)
-                .children(THEMES.into_iter().map(|t| {
+                .children(THEMES.iter().map(|t| {
                     let ft = get_theme(&t.clone());
                     let name = ft.name;
 

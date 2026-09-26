@@ -31,29 +31,39 @@ impl Component for Installs {
                 Table::new()
                     .column_widths([Size::px(100.0), Size::px(100.0), Size::px(100.0)])
                     .child(
-                        TableHead::new().child(
-                            TableRow::new()
-                                .child(TableCell::new().child(t!("installs_column_id")))
-                                .child(TableCell::new().child(t!("installs_column_version")))
-                                .child(TableCell::new().child(t!("installs_column_actions"))),
-                        ),
+                        TableRow::new()
+                            .child(
+                                label()
+                                    .font_weight(FontWeight::BOLD)
+                                    .text(t!("installs_column_id")),
+                            )
+                            .child(
+                                label()
+                                    .font_weight(FontWeight::BOLD)
+                                    .text(t!("installs_column_version")),
+                            )
+                            .child(
+                                label()
+                                    .font_weight(FontWeight::BOLD)
+                                    .text(t!("installs_column_actions")),
+                            ),
                     )
-                    .child(TableBody::new().child(ScrollView::new().children(
-                        installs.read().iter().enumerate().map(|(i, install)| {
-                            TableRow::new()
-                                .key(i)
-                                .child(TableCell::new().child(install.id.clone()))
-                                .child(
-                                    TableCell::new().child(
+                    .child(
+                        ScrollView::new().children(installs.read().iter().enumerate().map(
+                            |(i, install)| {
+                                TableRow::new()
+                                    .key(i)
+                                    .child(install.id.clone())
+                                    .child(
                                         install
                                             .game_version
                                             .clone()
-                                            .unwrap_or_else(|| "<unk>".to_string()),
-                                    ),
-                                )
-                                .child(TableCell::new().child("todo"))
-                        }),
-                    ))),
+                                            .unwrap_or_else(|| "—".to_string()),
+                                    )
+                                    .child("todo")
+                            },
+                        )),
+                    ),
             )
     }
 }

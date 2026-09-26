@@ -22,9 +22,8 @@ impl Settings {
     pub fn save(&self) {
         let config_path = self.cwd.join(CONFIG_NAME);
         json5::to_string(&self)
-            .and_then(|json| {
+            .map(|json| {
                 std::fs::write(&config_path, json).expect("write json works");
-                Ok(())
             })
             .expect("serde works");
     }
