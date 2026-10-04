@@ -47,23 +47,15 @@ impl Component for Instances {
                             .child(
                                 label()
                                     .font_weight(FontWeight::BOLD)
-                                    .text(t!("instances_column_id")),
+                                    .text(t!("instance_id")),
                             )
                             .child(
                                 label()
                                     .font_weight(FontWeight::BOLD)
-                                    .text(t!("instances_column_name")),
+                                    .text(t!("instance_name")),
                             )
-                            .child(
-                                label()
-                                    .font_weight(FontWeight::BOLD)
-                                    .text(t!("instances_column_install")),
-                            )
-                            .child(
-                                label()
-                                    .font_weight(FontWeight::BOLD)
-                                    .text(t!("instances_column_actions")),
-                            ),
+                            .child(label().font_weight(FontWeight::BOLD).text(t!("install_id")))
+                            .child(label().font_weight(FontWeight::BOLD).text(t!("actions"))),
                     )
                     .child(
                         ScrollView::new().children(instances.read().iter().enumerate().map(
@@ -136,6 +128,8 @@ impl Component for AddInstancePopup {
                 }
 
                 instances.write().push(instance);
+
+                // reset
                 open.set(false);
                 name.set(String::new());
                 selected_install_idx.set(None);
@@ -143,7 +137,7 @@ impl Component for AddInstancePopup {
             .into();
 
         Popup::new()
-            .width(Size::px(360.0))
+            .width(Size::px(450.0))
             .on_close_request(on_close.clone())
             .maybe(open(), |popup| {
                 popup
@@ -151,15 +145,15 @@ impl Component for AddInstancePopup {
                     .child(
                         PopupContent::new().child(
                             flex_rect(Direction::Vertical, SPACING_MD)
-                                .child(
+                                .child(form_row(
+                                    t!("instance_name"),
                                     Input::new(name)
                                         .width(Size::flex(1.0))
                                         .auto_focus(true)
-                                        .placeholder(t!("add_instance_name")),
-                                    // TODO: re-add this:
-                                    // .on_submit(on_submit.clone()),
-                                )
-                                .child(
+                                        .placeholder(t!("instance_name")),
+                                ))
+                                .child(form_row(
+                                    t!("install_id"),
                                     flex_rect(Direction::Horizontal, SPACING_SM)
                                         .width(Size::flex(1.0))
                                         .child(
@@ -212,7 +206,7 @@ impl Component for AddInstancePopup {
                                                         .height(Size::px(24.0)),
                                                 ),
                                         ),
-                                ),
+                                )),
                         ),
                     )
                     .child(
@@ -236,7 +230,7 @@ impl Component for AddInstancePopup {
                                             });
                                         on_submit.call((current_name, install_id));
                                     })
-                                    .child(t!("add_instance_create")),
+                                    .child(t!("create")),
                             ),
                     )
             })

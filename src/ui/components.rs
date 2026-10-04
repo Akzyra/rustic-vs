@@ -27,6 +27,18 @@ pub fn flex_rect(direction: Direction, spacing: f32) -> Rect {
         .spacing(spacing)
 }
 
+pub fn form_row(lbl: String, elem: impl IntoElement) -> Rect {
+    flex_rect(Direction::Horizontal, SPACING_MD)
+        .cross_align(Alignment::Center)
+        .child(
+            label()
+                .width(Size::px(150.0))
+                .text_align(TextAlign::Right)
+                .text(lbl),
+        )
+        .child(rect().width(Size::flex(1.0)).child(elem))
+}
+
 pub fn tool_tipped_pos(
     tooltip: String,
     pos: AttachedPosition,

@@ -2,7 +2,6 @@ use crate::core::rss::load_news_feed;
 use crate::ui::components::*;
 use freya::i18n::t;
 use freya::prelude::*;
-use rss::Channel;
 
 #[derive(PartialEq)]
 pub struct News;
@@ -10,13 +9,7 @@ pub struct News;
 impl Component for News {
     fn render(&self) -> impl IntoElement {
         // TODO: reload everytime route to this, cache it?
-        let future = use_future(move || async move {
-            if let Ok(channel) = load_news_feed().await {
-                channel
-            } else {
-                Channel::default()
-            }
-        });
+        let future = use_future(|| async { load_news_feed().await.unwrap_or_default() });
 
         main_rect(t!("news_header")).child(match &*future.state() {
             FutureState::Pending => label().text("Pending...").into_element(),
@@ -29,7 +22,7 @@ impl Component for News {
                     let link = item.link?;
                     let date = item.pub_date?;
 
-                    let short_date = chrono::DateTime::parse_from_rfc2822(&*date)
+                    let short_date = chrono::DateTime::parse_from_rfc2822(&date)
                         .map(|dt| format!("{}", dt.format("%Y-%m-%d")))
                         .unwrap_or(date);
 
