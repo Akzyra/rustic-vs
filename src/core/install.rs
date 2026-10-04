@@ -30,6 +30,13 @@ pub enum InstallError {
     MissingFile(String),
 }
 impl Install {
+    pub fn new(unsafe_id: String, game_version: Option<String>) -> Self {
+        Self {
+            id: filenamify(&unsafe_id),
+            game_version,
+        }
+    }
+
     pub fn load_from_dir(cwd: &Path, dir_name: &OsStr) -> Result<Install, InstallError> {
         let dir_path = cwd.join(DIR_NAME).join(dir_name);
 
