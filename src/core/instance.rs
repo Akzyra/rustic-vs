@@ -91,7 +91,11 @@ impl Instance {
         // fallback: re-create information as best as possible
         //TODO: keep backup of bad file? what if backup already exists?
 
-        let instance = Instance::new(id, None);
+        let instance = Instance {
+            id: id.clone(),
+            name: id,
+            install_id: None,
+        };
         json5::to_string(&instance)
             .map(|json| {
                 std::fs::write(&config_path, json).expect("write json works");
