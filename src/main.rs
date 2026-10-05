@@ -2,10 +2,17 @@ use freya::prelude::{LaunchConfig, WindowConfig, launch};
 mod core;
 mod ui;
 
+static NAME_VERSION: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
+static USER_AGENT: &str = concat!(
+    env!("CARGO_PKG_NAME"),
+    "/",
+    env!("CARGO_PKG_VERSION"),
+    " (https://github.com/Akzyra/rustic-vs)",
+);
+
 const ICON: &[u8] = include_bytes!("../assets/temp.png");
 
-#[tokio::main]
-async fn main() -> Result<(), fern::InitError> {
+fn main() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
@@ -17,6 +24,13 @@ async fn main() -> Result<(), fern::InitError> {
             ))
         })
         .level(log::LevelFilter::Debug)
+        .level_for("html5ever", log::LevelFilter::Error)
+        .level_for("style", log::LevelFilter::Error)
+        .level_for("selectors", log::LevelFilter::Error)
+        .level_for("rustls", log::LevelFilter::Error)
+        .level_for("reqwest", log::LevelFilter::Error)
+        .level_for("ureq", log::LevelFilter::Error)
+        .level_for("ureq_proto", log::LevelFilter::Error)
         .chain(std::io::stdout())
         .chain(fern::log_file("rustic.log")?)
         .apply()?;

@@ -3,6 +3,7 @@ use log::info;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::error::Error;
+use ureq::http::header::USER_AGENT;
 
 const STABLE_URL: &str = "https://api.vintagestory.at/stable.json";
 const UNSTABLE_URL: &str = "https://api.vintagestory.at/stable-unstable.json";
@@ -47,10 +48,9 @@ pub struct Downloads {
     pub unstable: HashMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
 }
 
-pub async fn load_versions() -> Result<Downloads, Box<dyn Error>> {
-    let client = reqwest::Client::new();
-    let stable = handle_url(&client, STABLE_URL).await?;
-    let unstable = handle_url(&client, UNSTABLE_URL).await?;
+pub fn load_versions() -> Result<Downloads, Box<dyn Error>> {
+    let stable = handle_url(STABLE_URL)?;
+    let unstable = handle_url(UNSTABLE_URL)?;
 
     info!(
         "fetched versions: {:?} stable, {:?} unstable",
@@ -60,17 +60,13 @@ pub async fn load_versions() -> Result<Downloads, Box<dyn Error>> {
     Ok(Downloads { stable, unstable })
 }
 
-async fn handle_url(
-    client: &reqwest::Client,
+fn handle_url(
     url: &str,
 ) -> Result<HashMap<String, HashMap<DownloadPlatform, DownloadInfo>>, Box<dyn Error>> {
-    let content = client
-        .get(url)
-        .header(reqwest::header::USER_AGENT, "rustic-vs launcher, by akzyra")
-        .send()
-        .await?
-        .text()
-        .await?;
+    let resp = ureq::get(url)
+        .header(USER_AGENT, crate::USER_AGENT)
+        .call()?;
+    let content = resp.into_body().read_to_string()?;
 
     Ok(from_str::<
         HashMap<String, HashMap<DownloadPlatform, DownloadInfo>>,

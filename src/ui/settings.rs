@@ -14,29 +14,46 @@ impl Component for Settings {
 
         let current_name = theme.read().name;
 
-        main_rect(t!("settings_header")).child(
-            flex_rect(Direction::Vertical, SPACING_SM)
-                .width(Size::px(400.0))
-                .child(form_row(
-                    t!("settings_theme"),
-                    Select::new()
-                        .width(Size::flex(1.0))
-                        .selected_item(current_name)
-                        .children(THEMES.iter().map(|t| {
-                            let ft = get_theme(&t.clone());
-                            let name = ft.name;
+        flex_rect(Direction::Vertical, SPACING_MD)
+            .theme_background()
+            .padding(SPACING_SM)
+            .child(
+                rect()
+                    .content(Content::Flex)
+                    .horizontal()
+                    .spacing(SPACING_SM)
+                    .child(
+                        label()
+                            .font_weight(FontWeight::BOLD)
+                            .font_size(20.0)
+                            .text(t!("settings_header")),
+                    )
+                    .child(rect().width(Size::flex(1.0)))
+                    .child(label().font_family("Consolas").text(crate::NAME_VERSION)),
+            )
+            .child(
+                flex_rect(Direction::Vertical, SPACING_SM)
+                    .width(Size::px(400.0))
+                    .child(form_row(
+                        t!("settings_theme"),
+                        Select::new()
+                            .width(Size::flex(1.0))
+                            .selected_item(current_name)
+                            .children(THEMES.iter().map(|t| {
+                                let ft = get_theme(&t.clone());
+                                let name = ft.name;
 
-                            MenuItem::new()
-                                .selected(name == current_name)
-                                .on_press(move |_| {
-                                    let t = t.clone();
-                                    theme.set(get_theme(&t));
-                                    settings.write().theme = t;
-                                    settings.read().save();
-                                })
-                                .child(name)
-                        })),
-                )),
-        )
+                                MenuItem::new()
+                                    .selected(name == current_name)
+                                    .on_press(move |_| {
+                                        let t = t.clone();
+                                        theme.set(get_theme(&t));
+                                        settings.write().theme = t;
+                                        settings.read().save();
+                                    })
+                                    .child(name)
+                            })),
+                    )),
+            )
     }
 }

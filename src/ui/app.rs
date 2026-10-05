@@ -29,7 +29,7 @@ pub fn app() -> impl IntoElement {
 
     let mut version_downloads = use_provide_context(|| State::create(Downloads::default()));
     use_future(move || async move {
-        version_downloads.set(load_versions().await.unwrap());
+        version_downloads.set(load_versions().unwrap());
     });
 
     Router::<Route>::new(|| RouterConfig::default().with_initial_path(Route::News))
