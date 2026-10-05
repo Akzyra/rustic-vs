@@ -108,7 +108,12 @@ impl Component for AddInstancePopup {
                     return;
                 }
 
-                let instance = Instance::new(new_name, install_id);
+                let Ok(cwd) = std::env::current_dir() else {
+                    log::error!("failed to get current dir, cannot save instance");
+                    return;
+                };
+
+                let instance = Instance::create(&cwd, new_name, install_id);
                 if instances.peek().iter().any(|i| i.id == instance.id) {
                     log::warn!(
                         "instance `{}` already exists, not adding a duplicate",
@@ -117,12 +122,7 @@ impl Component for AddInstancePopup {
                     return;
                 }
 
-                let Ok(cwd) = std::env::current_dir() else {
-                    log::error!("failed to get current dir, cannot save instance");
-                    return;
-                };
-
-                if let Err(e) = instance.save_to_dir(&cwd) {
+                if let Err(e) = instance.save() {
                     log::error!("failed to save instance `{}`: {}", instance.id, e);
                     return;
                 }

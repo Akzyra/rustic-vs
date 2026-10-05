@@ -2,6 +2,7 @@ use crate::core::install::Install;
 use crate::ui::components::*;
 use freya::i18n::t;
 use freya::prelude::*;
+use std::path::PathBuf;
 
 #[derive(PartialEq)]
 pub struct Installs;
@@ -96,7 +97,13 @@ impl Component for AddInstallPopup {
                     return;
                 }
 
-                let install = Install::new(new_id, Some(game_version));
+                let Ok(cwd) = std::env::current_dir() else {
+                    log::error!("failed to get current dir, cannot save install");
+                    return;
+                };
+
+                // TODO: remove this, after download call Install::load_from_dir() instead
+                let install = Install::create(&cwd, new_id, Some(game_version));
                 if installs.peek().iter().any(|i| i.id == install.id) {
                     log::warn!(
                         "install `{}` already exists, not adding a duplicate",

@@ -1,10 +1,10 @@
+use filenamify::filenamify;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use std::{
     ffi::{OsStr, OsString},
     path::Path,
 };
-
-use filenamify::filenamify;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 const DIR_NAME: &str = "instances";
@@ -20,6 +20,9 @@ pub struct Instance {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub install_id: Option<String>,
+
+    #[serde(skip)]
+    pub path: PathBuf,
 }
 
 #[derive(Error, Debug)]
@@ -41,20 +44,20 @@ pub enum InstanceError {
 }
 
 impl Instance {
-    pub fn new(name: String, install_id: Option<String>) -> Self {
+    pub fn create(cwd: &Path, name: String, install_id: Option<String>) -> Self {
         let id = filenamify(&name);
         Self {
+            path: cwd.join(DIR_NAME).join(&id),
             id,
             name,
             install_id,
         }
     }
 
-    pub fn save_to_dir(&self, cwd: &Path) -> Result<(), InstanceError> {
-        let dir_path = cwd.join(DIR_NAME).join(&self.id);
-        std::fs::create_dir_all(&dir_path).map_err(InstanceError::CreateDir)?;
+    pub fn save(&self) -> Result<(), InstanceError> {
+        std::fs::create_dir_all(&self.path).map_err(InstanceError::CreateDir)?;
 
-        let config_path = dir_path.join(CONFIG_NAME);
+        let config_path = self.path.join(CONFIG_NAME);
         let json = json5::to_string(self).map_err(InstanceError::Serialize)?;
         std::fs::write(&config_path, json).map_err(InstanceError::WriteConfig)?;
         Ok(())
@@ -80,6 +83,7 @@ impl Instance {
             if let Ok(mut inst) = json5::from_str::<Instance>(&json) {
                 // attach non serialized data
                 inst.id = id;
+                inst.path = dir_path;
                 return Ok(inst);
             } else {
                 log::warn!("failed parsing `{}` -> re-init", id);
@@ -95,12 +99,9 @@ impl Instance {
             id: id.clone(),
             name: id,
             install_id: None,
+            path: dir_path,
         };
-        json5::to_string(&instance)
-            .map(|json| {
-                std::fs::write(&config_path, json).expect("write json works");
-            })
-            .expect("serde works");
+        instance.save()?;
         Ok(instance)
     }
 }

@@ -1,9 +1,9 @@
+use filenamify::filenamify;
+use std::path::PathBuf;
 use std::{
     ffi::{OsStr, OsString},
     path::Path,
 };
-
-use filenamify::filenamify;
 use thiserror::Error;
 
 const DIR_NAME: &str = "installs";
@@ -16,6 +16,7 @@ const VERSION_SUFFIX: &str = ".txt";
 pub struct Install {
     pub id: String,
     pub game_version: Option<String>,
+    pub path: PathBuf,
 }
 
 #[derive(Error, Debug)]
@@ -30,9 +31,11 @@ pub enum InstallError {
     MissingFile(String),
 }
 impl Install {
-    pub fn new(unsafe_id: String, game_version: Option<String>) -> Self {
+    pub fn create(cwd: &Path, unsafe_id: String, game_version: Option<String>) -> Self {
+        let id = filenamify(&unsafe_id);
         Self {
-            id: filenamify(&unsafe_id),
+            path: cwd.join(DIR_NAME).join(&id),
+            id,
             game_version,
         }
     }
@@ -56,7 +59,11 @@ impl Install {
         let id = dir_name_str.to_string();
         let game_version = get_game_version(dir_path.as_path());
 
-        Ok(Install { id, game_version })
+        Ok(Install {
+            id,
+            game_version,
+            path: dir_path,
+        })
     }
 }
 
