@@ -1,3 +1,4 @@
+use crate::core::api::{Downloads, load_versions};
 use crate::core::install::load_installs;
 use crate::core::instance::{Instance, load_instances};
 use crate::core::rss::FeedEntry;
@@ -25,6 +26,11 @@ pub fn app() -> impl IntoElement {
     use_provide_context(|| State::create(load_installs(&cwd)));
     use_provide_context(|| State::create(load_instances(&cwd)));
     use_provide_context(|| State::create(None::<Vec<FeedEntry>>));
+
+    let mut version_downloads = use_provide_context(|| State::create(Downloads::default()));
+    use_future(move || async move {
+        version_downloads.set(load_versions().await.unwrap());
+    });
 
     Router::<Route>::new(|| RouterConfig::default().with_initial_path(Route::News))
 }
