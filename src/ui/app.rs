@@ -1,10 +1,11 @@
 use crate::core::install::load_installs;
 use crate::core::instance::{Instance, load_instances};
+use crate::core::rss::FeedEntry;
 use crate::core::settings::load_settings;
 use crate::ui::components::*;
 use crate::ui::get_theme;
 use freya::i18n::*;
-use freya::icons;
+use freya::icons::lucide;
 use freya::prelude::*;
 use freya::router::*;
 
@@ -23,6 +24,7 @@ pub fn app() -> impl IntoElement {
     use_provide_context(|| State::create(settings));
     use_provide_context(|| State::create(load_installs(&cwd)));
     use_provide_context(|| State::create(load_instances(&cwd)));
+    use_provide_context(|| State::create(None::<Vec<FeedEntry>>));
 
     Router::<Route>::new(|| RouterConfig::default().with_initial_path(Route::News))
 }
@@ -74,25 +76,25 @@ impl Component for Layout {
                     .background(get_theme_or_default().read().colors.surface_tertiary)
                     .child(sidebar_link(
                         Route::News,
-                        icons::lucide::rss(),
+                        lucide::rss(),
                         t!("menu_news"),
                         t!("menu_news_tt"),
                     ))
                     .child(sidebar_link(
                         Route::Installs,
-                        icons::lucide::boxes(),
+                        lucide::boxes(),
                         t!("menu_installs"),
                         t!("menu_installs_tt"),
                     ))
                     .child(sidebar_link(
                         Route::Instances,
-                        icons::lucide::folder_cog(),
+                        lucide::folder_cog(),
                         t!("menu_instances"),
                         t!("menu_instances_tt"),
                     ))
                     .child(sidebar_link(
                         Route::Settings,
-                        icons::lucide::settings(),
+                        lucide::settings(),
                         t!("menu_settings"),
                         t!("menu_settings_tt"),
                     ))
@@ -127,7 +129,7 @@ impl Component for Layout {
                         Route::InstanceEdit {
                             instance_id: instances.read()[selected_instance_idx()].id.clone(),
                         },
-                        icons::lucide::bolt(),
+                        lucide::bolt(),
                         t!("menu_instance_edit"),
                         t!("menu_instance_edit_tt"),
                     ))

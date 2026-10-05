@@ -1,51 +1,90 @@
-use crate::core::rss::load_news_feed;
+use crate::core::rss::{FeedEntry, load_news_feed};
 use crate::ui::components::*;
 use freya::i18n::t;
+use freya::icons::lucide;
 use freya::prelude::*;
+use std::ops::Not;
+use std::time::Duration;
 
 #[derive(PartialEq)]
 pub struct News;
 
 impl Component for News {
     fn render(&self) -> impl IntoElement {
-        // TODO: reload everytime route to this, cache it?
-        let future = use_future(|| async { load_news_feed().await.unwrap_or_default() });
-
-        main_rect(t!("news_header")).child(match &*future.state() {
-            FutureState::Pending => label().text("Pending...").into_element(),
-            FutureState::Loading => label().text("Loading...").into_element(),
-            FutureState::Fulfilled(channel) => ScrollView::new()
-                .width(Size::Fill)
-                .spacing(SPACING_MD)
-                .children(channel.items.clone().into_iter().flat_map(|item| {
-                    let title = item.title?;
-                    let link = item.link?;
-                    let date = item.pub_date?;
-
-                    let short_date = chrono::DateTime::parse_from_rfc2822(&date)
-                        .map(|dt| format!("{}", dt.format("%Y-%m-%d")))
-                        .unwrap_or(date);
-
-                    Some(rss_row(title, short_date, link).into_element())
-                }))
-                .into_element(),
-        })
+        let mut feed = use_consume::<State<Option<Vec<FeedEntry>>>>();
+        let mut future = use_future(move || async move {
+            if feed.peek().is_none() {
+                let entries = load_news_feed().await.unwrap_or_default();
+                feed.set(Some(entries));
+            }
+        });
+        let loading = feed.read().is_none();
+        flex_rect(Direction::Vertical, SPACING_MD)
+            .theme_background()
+            .padding(SPACING_SM)
+            .child(
+                rect()
+                    .content(Content::Flex)
+                    .horizontal()
+                    .spacing(SPACING_SM)
+                    .child(
+                        label()
+                            .font_weight(FontWeight::BOLD)
+                            .font_size(20.0)
+                            .text(t!("news_header")),
+                    )
+                    .child(rect().width(Size::flex(1.0)))
+                    .child(
+                        Button::new()
+                            .padding(6.0)
+                            .on_press(move |_| {
+                                feed.set(None);
+                                future.start();
+                            })
+                            .child(
+                                SvgViewer::new(lucide::rotate_cw())
+                                    .width(Size::px(24.0))
+                                    .height(Size::px(24.0)),
+                            ),
+                    ),
+            )
+            .child(
+                Skeleton::new(loading)
+                    .width(Size::fill())
+                    .height(Size::fill())
+                    .animation(SkeletonAnimation::Shimmer)
+                    .duration(Duration::from_secs(2))
+                    // needs maybe_child since expect() would fail on None
+                    .maybe_child(loading.not().then(|| {
+                        ScrollView::new()
+                            .width(Size::Fill)
+                            .spacing(SPACING_MD)
+                            .children(
+                                feed.read()
+                                    .as_ref()
+                                    .expect("maybe_child() guard")
+                                    .iter()
+                                    .map(rss_row),
+                            )
+                    })),
+            )
     }
 }
 
-fn rss_row(title: String, date: String, link: String) -> impl IntoElement {
-    Link::new(link).child(
+fn rss_row(feed_entry: &FeedEntry) -> impl IntoElement {
+    let short_date = format!("{}", feed_entry.date.format("%Y-%m-%d"));
+    Link::new(feed_entry.link.clone()).child(
         Button::new().width(Size::Fill).outline().child(
             rect()
                 .content(Content::Flex)
                 .horizontal()
                 .child(
                     label()
-                        .text(title)
+                        .text(feed_entry.title.clone())
                         .font_weight(FontWeight::BOLD)
                         .width(Size::flex(1.0)),
                 )
-                .child(label().text(date)),
+                .child(label().text(short_date)),
         ),
     )
 }

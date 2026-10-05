@@ -2,7 +2,7 @@ use crate::core::install::Install;
 use crate::core::instance::Instance;
 use crate::ui::components::*;
 use freya::i18n::t;
-use freya::icons;
+use freya::icons::lucide;
 use freya::prelude::*;
 
 #[derive(PartialEq)]
@@ -198,10 +198,11 @@ impl Component for AddInstancePopup {
                                         .child(
                                             Button::new()
                                                 .width(Size::auto())
+                                                .padding(6.0)
                                                 .outline()
                                                 .on_press(move |_| selected_install_idx.set(None))
                                                 .child(
-                                                    SvgViewer::new(icons::lucide::x())
+                                                    SvgViewer::new(lucide::x())
                                                         .width(Size::px(24.0))
                                                         .height(Size::px(24.0)),
                                                 ),
