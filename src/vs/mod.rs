@@ -1,6 +1,8 @@
 use std::io;
 use thiserror::Error;
 
+pub mod api;
+
 #[cfg(target_os = "windows")]
 pub mod inno;
 pub mod tar;

@@ -1,10 +1,9 @@
-use crate::core::api::{Downloads, load_versions};
 use crate::core::install::load_installs;
 use crate::core::instance::{Instance, load_instances};
-use crate::core::rss::FeedEntry;
 use crate::core::settings::load_settings;
 use crate::ui::components::*;
 use crate::ui::get_theme;
+use crate::vs::api::{Downloads, FeedEntry, load_versions};
 use freya::i18n::*;
 use freya::icons::lucide;
 use freya::prelude::*;

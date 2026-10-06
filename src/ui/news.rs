@@ -1,5 +1,5 @@
-use crate::core::rss::{FeedEntry, load_news_feed};
 use crate::ui::components::*;
+use crate::vs::api::{FeedEntry, load_news_feed};
 use freya::html::{HtmlHandle, HtmlSource, HtmlViewer};
 use freya::i18n::t;
 use freya::icons::lucide;
