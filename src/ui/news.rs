@@ -47,8 +47,8 @@ impl Component for News {
                             })
                             .child(
                                 SvgViewer::new(lucide::rotate_cw())
-                                    .width(Size::px(24.0))
-                                    .height(Size::px(24.0)),
+                                    .width(Size::px(21.0))
+                                    .height(Size::px(21.0)),
                             ),
                     ),
             )

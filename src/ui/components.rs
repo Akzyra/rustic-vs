@@ -27,6 +27,17 @@ pub fn flex_rect(direction: Direction, spacing: f32) -> Rect {
         .spacing(spacing)
 }
 
+/// Wrapper with hopefully sensible defaults for a table cell rect.
+pub fn cell_fix(main_align: Alignment) -> Rect {
+    rect()
+        .horizontal()
+        .width(Size::fill())
+        .padding(0.0)
+        .margin(0.0)
+        .main_align(main_align)
+        .cross_align(Alignment::Center)
+}
+
 pub fn form_row(size: &Size, lbl: String, elem: impl IntoElement) -> Rect {
     flex_rect(Direction::Horizontal, SPACING_MD)
         .cross_align(Alignment::Center)

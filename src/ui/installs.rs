@@ -39,30 +39,40 @@ impl Component for Installs {
             )
             .child(
                 Table::new()
-                    .column_widths([Size::px(100.0), Size::px(100.0), Size::px(100.0)])
+                    .column_widths([Size::flex(1.0), Size::flex(1.0), Size::px(100.0)])
                     .child(
                         TableRow::new()
-                            .child(label().font_weight(FontWeight::BOLD).text(t!("install_id")))
+                            .child(cell_fix(Alignment::Center).child(
+                                label().font_weight(FontWeight::BOLD).text(t!("install_id")),
+                            ))
                             .child(
-                                label()
-                                    .font_weight(FontWeight::BOLD)
-                                    .text(t!("install_version")),
+                                cell_fix(Alignment::Center).child(
+                                    label()
+                                        .font_weight(FontWeight::BOLD)
+                                        .text(t!("install_version")),
+                                ),
                             )
-                            .child(label().font_weight(FontWeight::BOLD).text(t!("actions"))),
+                            .child(
+                                cell_fix(Alignment::Center).child(
+                                    label().font_weight(FontWeight::BOLD).text(t!("actions")),
+                                ),
+                            ),
                     )
                     .child(
                         ScrollView::new().children(installs.read().iter().enumerate().map(
                             |(i, install)| {
                                 TableRow::new()
                                     .key(i)
-                                    .child(install.id.clone())
+                                    .child(cell_fix(Alignment::Center).child(install.id.clone()))
                                     .child(
-                                        install
-                                            .game_version
-                                            .clone()
-                                            .unwrap_or_else(|| "—".to_string()),
+                                        cell_fix(Alignment::Center).child(
+                                            install
+                                                .game_version
+                                                .clone()
+                                                .unwrap_or_else(|| "—".to_string()),
+                                        ),
                                     )
-                                    .child("todo")
+                                    .child(cell_fix(Alignment::Center).child("todo"))
                             },
                         )),
                     ),

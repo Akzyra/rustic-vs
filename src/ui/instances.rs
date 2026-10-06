@@ -37,40 +37,52 @@ impl Component for Instances {
             .child(
                 Table::new()
                     .column_widths([
-                        Size::px(100.0),
                         Size::flex(1.0),
-                        Size::px(100.0),
+                        Size::flex(1.3),
+                        Size::flex(1.0),
                         Size::px(100.0),
                     ])
                     .child(
                         TableRow::new()
                             .child(
-                                label()
-                                    .font_weight(FontWeight::BOLD)
-                                    .text(t!("instance_id")),
+                                cell_fix(Alignment::Center).child(
+                                    label()
+                                        .font_weight(FontWeight::BOLD)
+                                        .text(t!("instance_id")),
+                                ),
                             )
                             .child(
-                                label()
-                                    .font_weight(FontWeight::BOLD)
-                                    .text(t!("instance_name")),
+                                cell_fix(Alignment::Center).child(
+                                    label()
+                                        .font_weight(FontWeight::BOLD)
+                                        .text(t!("instance_name")),
+                                ),
                             )
-                            .child(label().font_weight(FontWeight::BOLD).text(t!("install_id")))
-                            .child(label().font_weight(FontWeight::BOLD).text(t!("actions"))),
+                            .child(cell_fix(Alignment::Center).child(
+                                label().font_weight(FontWeight::BOLD).text(t!("install_id")),
+                            ))
+                            .child(
+                                cell_fix(Alignment::Center).child(
+                                    label().font_weight(FontWeight::BOLD).text(t!("actions")),
+                                ),
+                            ),
                     )
                     .child(
                         ScrollView::new().children(instances.read().iter().enumerate().map(
                             |(i, instance)| {
                                 TableRow::new()
                                     .key(i)
-                                    .child(instance.id.clone())
-                                    .child(instance.name.clone())
+                                    .child(cell_fix(Alignment::Center).child(instance.id.clone()))
+                                    .child(cell_fix(Alignment::Center).child(instance.name.clone()))
                                     .child(
-                                        instance
-                                            .install_id
-                                            .clone()
-                                            .unwrap_or_else(|| "—".to_string()),
+                                        cell_fix(Alignment::Center).child(
+                                            instance
+                                                .install_id
+                                                .clone()
+                                                .unwrap_or_else(|| "—".to_string()),
+                                        ),
                                     )
-                                    .child("todo")
+                                    .child(cell_fix(Alignment::Center).child("todo"))
                             },
                         )),
                     ),
