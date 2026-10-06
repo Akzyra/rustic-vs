@@ -27,12 +27,12 @@ pub fn flex_rect(direction: Direction, spacing: f32) -> Rect {
         .spacing(spacing)
 }
 
-pub fn form_row(lbl: String, elem: impl IntoElement) -> Rect {
+pub fn form_row(size: &Size, lbl: String, elem: impl IntoElement) -> Rect {
     flex_rect(Direction::Horizontal, SPACING_MD)
         .cross_align(Alignment::Center)
         .child(
             label()
-                .width(Size::px(150.0))
+                .width(size.clone())
                 .text_align(TextAlign::Right)
                 .text(lbl),
         )

@@ -1,7 +1,7 @@
 use crate::core::install::Install;
 use crate::ui::components::*;
 use crate::ui::installs::AddInstallState::{Done, Unpacking};
-use crate::vs::{Progress, extract_vs};
+use crate::vs::{Progress, unpack_vs};
 use freya::i18n::t;
 use freya::prelude::*;
 use log::{error, info};
@@ -118,11 +118,11 @@ impl Component for AddInstallPopup {
                 let total = humansize::format_size(progress.bytes_total, humansize::BINARY);
                 let written = humansize::format_size(progress.bytes_written, humansize::BINARY);
                 let filename = match progress.current_file.rsplit_once('/') {
-                    None => "<error>",
+                    None => &progress.current_file,
                     Some((_, filename)) => filename,
                 };
 
-                format!("{}/{} - {}", written, total, filename)
+                format!("{}/{} \u{2022} {}", written, total, filename)
             }
             Done => "DONE".to_string(),
         });
@@ -193,8 +193,10 @@ impl Component for AddInstallPopup {
                     // unpack archive
                     //TODO: use downloaded file
                     let exe = PathBuf::from("D:/Vintage Story/test/vs_install_win-x64_1.22.7.exe");
+                    let tar =
+                        PathBuf::from("D:/Vintage Story/test/vs_client_linux-x64_1.22.7.tar.gz");
 
-                    let res = extract_vs(&exe, &out_path, |progress| {
+                    let res = unpack_vs(&tar, &out_path, |progress| {
                         tx.send_replace(Unpacking(progress));
                     });
                     if let Err(e) = res {
@@ -234,6 +236,7 @@ impl Component for AddInstallPopup {
             })
             .into();
 
+        let label_width = Size::px(100.0);
         Popup::new()
             .width(Size::px(450.0))
             //.on_close_request(on_close.clone())
@@ -243,6 +246,7 @@ impl Component for AddInstallPopup {
                         .child(
                             flex_rect(Direction::Vertical, SPACING_MD)
                                 .child(form_row(
+                                    &label_width,
                                     t!("install_id"),
                                     Input::new(id)
                                         .width(Size::flex(1.0))
@@ -251,25 +255,39 @@ impl Component for AddInstallPopup {
                                         .placeholder(t!("install_id")),
                                 ))
                                 .child(form_row(
+                                    &label_width,
                                     t!("install_version"),
                                     // TOOD: add version select
                                     label().text(version.read().clone()),
                                 ))
                                 .maybe_child(download_percent.read().is_sign_positive().then(
                                     || {
-                                        ProgressBar::new(*download_percent.read())
-                                            .show_progress(false)
-                                            .width(Size::flex(1.0))
+                                        form_row(
+                                            &label_width,
+                                            t!("download"),
+                                            ProgressBar::new(*download_percent.read())
+                                                .width(Size::flex(1.0)),
+                                        )
                                     },
                                 ))
                                 .maybe_child(unpacking_percent.read().is_sign_positive().then(
-                                    || ProgressBar::new(unpacking_percent()).width(Size::flex(1.0)),
+                                    || {
+                                        form_row(
+                                            &label_width,
+                                            t!("unpacking"),
+                                            ProgressBar::new(*unpacking_percent.read())
+                                                .width(Size::flex(1.0)),
+                                        )
+                                    },
                                 ))
-                                .child(label().text(status_text.read().clone()))
+                                .child(
+                                    rect().overflow(Overflow::Clip).width(Size::fill()).child(
+                                        label().max_lines(1).text(status_text.read().clone()),
+                                    ),
+                                )
                                 .child(
                                     label()
                                         .overline()
-                                        .max_lines(1)
                                         .text("Mockup, does not download new versions yet!"),
                                 ),
                         )

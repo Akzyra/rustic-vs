@@ -6,7 +6,7 @@ use std::path::Path;
 use std::time::Instant;
 use std::{assert_matches, fs};
 
-pub fn extract_inno<F>(
+pub fn unpack_inno<F>(
     inno_path: &Path,
     out_path: &Path,
     mut on_progress: F,
@@ -25,7 +25,7 @@ where
     assert_matches!(header.app_publisher(), Some("Anego Systems"));
 
     on_progress(Progress {
-        current_file: "starting...".to_string(),
+        current_file: "parsing archive...".to_string(),
         ..Default::default()
     });
 
@@ -45,9 +45,9 @@ where
         .for_each(|(ee, bytes)| {
             let f = ee.file();
             let fl = ee.file_location();
-            let destination = f.normalized_destination().expect("normalize failed");
+            let rel_path_str = f.normalized_destination().expect("normalize failed");
 
-            let path = out_path.join(&destination);
+            let path = out_path.join(&rel_path_str);
             fs::create_dir_all(path.parent().expect("missing parent")).expect("create dir failed");
             fs::write(&path, &bytes).expect("write failed");
 
@@ -55,7 +55,7 @@ where
             let speed_bps = bytes_written.checked_div(elapsed_secs).unwrap_or(0);
 
             on_progress(Progress {
-                current_file: destination,
+                current_file: rel_path_str,
                 files_total,
                 files_written,
                 bytes_total,
@@ -71,7 +71,7 @@ where
     let elapsed_secs = start_time.elapsed().as_secs();
     let speed_bps = bytes_written.checked_div(elapsed_secs).unwrap_or(0);
 
-    // we only extract {app} files, but we do not know how many are skipped
+    // we only unpack {app} files, but we do not know how many are skipped
     // to get 100% when done we "fix" it with "files_total: files_written"
     on_progress(Progress {
         current_file: "DONE".to_string(),

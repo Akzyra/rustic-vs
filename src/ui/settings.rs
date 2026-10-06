@@ -14,6 +14,7 @@ impl Component for Settings {
 
         let current_name = theme.read().name;
 
+        let label_width = Size::px(150.0);
         flex_rect(Direction::Vertical, SPACING_MD)
             .theme_background()
             .padding(SPACING_SM)
@@ -33,8 +34,9 @@ impl Component for Settings {
             )
             .child(
                 flex_rect(Direction::Vertical, SPACING_SM)
-                    .width(Size::px(400.0))
+                    .width(Size::px(450.0))
                     .child(form_row(
+                        &label_width,
                         t!("settings_theme"),
                         Select::new()
                             .width(Size::flex(1.0))

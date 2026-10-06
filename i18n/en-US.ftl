@@ -17,6 +17,7 @@ cancel = Cancel
 ok = Ok
 create = Create
 download = Download
+unpacking = Unpacking
 actions = Actions
 
 # page: news

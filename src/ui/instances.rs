@@ -136,6 +136,7 @@ impl Component for AddInstancePopup {
             })
             .into();
 
+        let label_width = Size::px(100.0);
         Popup::new()
             .width(Size::px(450.0))
             .on_close_request(on_close.clone())
@@ -146,6 +147,7 @@ impl Component for AddInstancePopup {
                         PopupContent::new().child(
                             flex_rect(Direction::Vertical, SPACING_MD)
                                 .child(form_row(
+                                    &label_width,
                                     t!("instance_name"),
                                     Input::new(name)
                                         .width(Size::flex(1.0))
@@ -153,6 +155,7 @@ impl Component for AddInstancePopup {
                                         .placeholder(t!("instance_name")),
                                 ))
                                 .child(form_row(
+                                    &label_width,
                                     t!("install_id"),
                                     flex_rect(Direction::Horizontal, SPACING_SM)
                                         .width(Size::flex(1.0))
