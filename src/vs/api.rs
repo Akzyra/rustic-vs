@@ -1,6 +1,6 @@
 use chrono::{DateTime, Local};
 use json5::from_str;
-use log::info;
+use log;
 use rss::Channel;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -8,7 +8,7 @@ use std::error::Error;
 use std::io::BufReader;
 use ureq::http::header::USER_AGENT;
 
-const RSS_URL: &str = "https: //www.vintagestory.at/blog.html/?rss=1";
+const RSS_URL: &str = "https://www.vintagestory.at/blog.html/?rss=1";
 const STABLE_URL: &str = "https://api.vintagestory.at/stable.json";
 const UNSTABLE_URL: &str = "https://api.vintagestory.at/stable-unstable.json";
 
@@ -55,7 +55,7 @@ pub fn load_versions() -> Result<Downloads, Box<dyn Error>> {
     let stable = get_downloads(STABLE_URL)?;
     let unstable = get_downloads(UNSTABLE_URL)?;
 
-    info!(
+    log::info!(
         "fetched versions: {:?} stable, {:?} unstable",
         stable.len(),
         unstable.len()
@@ -107,7 +107,7 @@ pub fn load_news_feed() -> Result<Vec<FeedEntry>, Box<dyn Error>> {
     let reader = resp.body_mut().as_reader();
 
     let channel = Channel::read_from(BufReader::new(reader))?;
-    info!("got channel: {:?}", channel.title);
+    log::info!("got channel: {:?}", channel.title);
 
     Ok(channel
         .items

@@ -4,6 +4,7 @@ use freya::html::{HtmlHandle, HtmlSource, HtmlViewer};
 use freya::i18n::t;
 use freya::icons::lucide;
 use freya::prelude::*;
+use std::error::Error;
 use std::ops::Not;
 use std::time::Duration;
 
@@ -15,8 +16,14 @@ impl Component for News {
         let mut feed = use_consume::<State<Option<Vec<FeedEntry>>>>();
         let mut future = use_future(move || async move {
             if feed.peek().is_none() {
-                let entries = load_news_feed().unwrap_or_default();
-                feed.set(Some(entries));
+                match load_news_feed() {
+                    Ok(entries) => {
+                        feed.set(Some(entries));
+                    }
+                    Err(e) => {
+                        log::error!("failed to load news feed: {}", e);
+                    }
+                }
             }
         });
         let loading = feed.read().is_none();

@@ -3,7 +3,7 @@ use flate2::read::GzDecoder;
 use log;
 use std::fs;
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 use tar::Archive;
 
@@ -56,9 +56,15 @@ where
     for entry in archive.entries()? {
         let mut entry = entry?;
 
-        entry.unpack_in(out_path)?;
+        // remove "vintagestory" folder from unpack path
+        let rel_path = entry.path()?.components().skip(1).collect::<PathBuf>();
+        if rel_path.is_empty() {
+            continue;
+        }
 
-        let rel_path = entry.path()?.to_path_buf();
+        let path = out_path.join(&rel_path);
+        fs::create_dir_all(path.parent().expect("missing parent"))?;
+        entry.unpack(path)?;
 
         let elapsed_secs = start_time.elapsed().as_secs();
         let speed_bps = bytes_written.checked_div(elapsed_secs).unwrap_or(0);

@@ -4,7 +4,7 @@ use crate::ui::installs::AddInstallState::{Done, Unpacking};
 use crate::vs::{Progress, unpack_vs};
 use freya::i18n::t;
 use freya::prelude::*;
-use log::{error, info};
+use log;
 use std::ops::Deref;
 use std::path::PathBuf;
 use tokio::sync::watch;
@@ -184,7 +184,7 @@ impl Component for AddInstallPopup {
                 let job = tokio::task::spawn_blocking(move || {
                     // download file
                     // TODO: call download
-                    info!("fake download {}", game_version);
+                    log::info!("fake download {}", game_version);
                     for n in 1..101 {
                         std::thread::sleep(std::time::Duration::from_millis(20));
                         tx.send_replace(AddInstallState::Downloading(n as f32));
@@ -227,7 +227,7 @@ impl Component for AddInstallPopup {
                             Ok(()) => {}
                             Err(e) => {
                                 //TODO: show in UI ?
-                                error!("{}", e);
+                                log::error!("{}", e);
                             }
                         }
                     },

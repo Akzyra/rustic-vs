@@ -1,6 +1,6 @@
 use crate::vs::{Progress, UnpackError};
 use inno::Inno;
-use log::info;
+use log;
 use std::fs::File;
 use std::path::Path;
 use std::time::Instant;
@@ -17,7 +17,7 @@ where
     let inno_file = File::open(inno_path)?;
     let mut inno = Inno::new(inno_file)?;
     let header = inno.header();
-    info!(
+    log::info!(
         "unpacking file {}",
         inno_path.file_name().unwrap().display()
     );
@@ -82,6 +82,6 @@ where
         elapsed_secs,
         speed_bps,
     });
-    info!("unpacked {} files, {} bytes", files_written, bytes_written,);
+    log::info!("unpacked {} files, {} bytes", files_written, bytes_written,);
     Ok(())
 }
