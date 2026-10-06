@@ -1,6 +1,9 @@
 use freya::prelude::{LaunchConfig, WindowConfig, launch};
+use tokio::runtime::Builder;
+
 mod core;
 mod ui;
+mod vs;
 
 static NAME_VERSION: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 static USER_AGENT: &str = concat!(
@@ -34,6 +37,9 @@ fn main() -> Result<(), fern::InitError> {
         .chain(std::io::stdout())
         .chain(fern::log_file("rustic.log")?)
         .apply()?;
+
+    let rt = Builder::new_multi_thread().enable_all().build().unwrap();
+    let _rt = rt.enter();
 
     launch(
         LaunchConfig::new().with_window(

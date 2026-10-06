@@ -1,8 +1,13 @@
 use crate::core::install::Install;
 use crate::ui::components::*;
+use crate::ui::installs::AddInstallState::{Done, Unpacking};
+use crate::vs::{Progress, extract_vs};
 use freya::i18n::t;
 use freya::prelude::*;
+use log::{error, info};
+use std::ops::Deref;
 use std::path::PathBuf;
+use tokio::sync::watch;
 
 #[derive(PartialEq)]
 pub struct Installs;
@@ -71,25 +76,82 @@ struct AddInstallPopup {
     show: State<bool>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+enum AddInstallState {
+    New,
+    Downloading(f32), // TODO: more data?
+    Unpacking(Progress),
+    Done,
+}
+
 impl Component for AddInstallPopup {
     fn render(&self) -> impl IntoElement {
+        let popup_scope_id = current_scope_id();
+
         let mut open = self.show;
         let mut id = use_state(String::new);
-        let version = use_state(|| "latest".to_string());
+        let version = use_state(|| "fake download".to_string());
         let mut installs = use_consume::<State<Vec<Install>>>();
+        let mut install = use_state(|| None::<Install>);
 
         //TODO: read global cache of game version using API -> select box
 
-        let progress_download = use_state(|| -1.0f32);
-        let progress_install = use_state(|| -1.0f32);
+        let mut state = use_state(|| AddInstallState::New);
+        let download_percent = use_memo(move || match state.read().deref() {
+            AddInstallState::New => -1f32,
+            AddInstallState::Downloading(percent) => *percent,
+            Unpacking(_) => 100f32,
+            Done => 100f32,
+        });
+        let unpacking_percent = use_memo(move || match state.read().deref() {
+            AddInstallState::New => -1f32,
+            AddInstallState::Downloading(_) => 0f32,
+            Unpacking(progress) => (progress.bytes_written * 100)
+                .checked_div(progress.bytes_total)
+                .unwrap_or(0) as f32,
+            Done => 100f32,
+        });
+        let status_text = use_memo(move || match state.read().deref() {
+            AddInstallState::New => String::new(),
+            AddInstallState::Downloading(percent) => format!("downloading {:.1}%", percent),
+            Unpacking(progress) => {
+                let total = humansize::format_size(progress.bytes_total, humansize::BINARY);
+                let written = humansize::format_size(progress.bytes_written, humansize::BINARY);
+                let filename = match progress.current_file.rsplit_once('/') {
+                    None => "<error>",
+                    Some((_, filename)) => filename,
+                };
 
-        let on_close: EventHandler<()> = (move |_| {
+                format!("{}/{} - {}", written, total, filename)
+            }
+            Done => "DONE".to_string(),
+        });
+
+        let on_close: EventHandler<_> = (move |_| {
             open.set(false);
             id.set(String::new());
+            //TODO: reset select
+            state.set(AddInstallState::New);
         })
         .into();
 
-        let on_submit: EventHandler<(String, String)> =
+        let on_ok: EventHandler<_> = (move |_| {
+            // reload to get game version
+            //TODO: fix use of partially moved value: `install`
+            let new_install = install.read().clone();
+            let mut new_install2 = new_install.unwrap();
+            new_install2.reload();
+            installs.write().push(new_install2.clone());
+
+            // reset
+            open.set(false);
+            id.set(String::new());
+            //TODO: reset select
+            state.set(AddInstallState::New);
+        })
+        .into();
+
+        let on_download: EventHandler<(String, String)> =
             (move |(raw_id, game_version): (String, String)| {
                 //TODO: display error in UI, show if name cannot be used -> input on_validation
                 let new_id = raw_id.trim().to_string();
@@ -102,30 +164,79 @@ impl Component for AddInstallPopup {
                     return;
                 };
 
-                // TODO: remove this, after download call Install::load_from_dir() instead
-                let install = Install::create(&cwd, new_id, Some(game_version));
-                if installs.peek().iter().any(|i| i.id == install.id) {
+                // set game version to None, will be loaded from disk when done
+                let new_install = Install::create(&cwd, new_id, None);
+                if new_install.id != "test"
+                    && installs.peek().iter().any(|i| i.id == new_install.id)
+                {
                     log::warn!(
                         "install `{}` already exists, not adding a duplicate",
-                        install.id
+                        new_install.id
                     );
                     return;
                 }
 
-                // TODO: call download and installer, handle errors
+                let out_path = new_install.path.clone();
+                install.set(Some(new_install));
 
-                installs.write().push(install);
+                // move unpack to blocking pool
+                let (tx, mut rx) = watch::channel(AddInstallState::New);
+                let job = tokio::task::spawn_blocking(move || {
+                    // download file
+                    // TODO: call download
+                    info!("fake download {}", game_version);
+                    for n in 1..101 {
+                        std::thread::sleep(std::time::Duration::from_millis(20));
+                        tx.send_replace(AddInstallState::Downloading(n as f32));
+                    }
 
-                // reset
-                open.set(false);
-                id.set(String::new());
-                //TODO: reset select
+                    // unpack archive
+                    //TODO: use downloaded file
+                    let exe = PathBuf::from("D:/Vintage Story/test/vs_install_win-x64_1.22.7.exe");
+
+                    let res = extract_vs(&exe, &out_path, |progress| {
+                        tx.send_replace(Unpacking(progress));
+                    });
+                    if let Err(e) = res {
+                        log::error!("unpack failed: {:?}", e);
+                    };
+
+                    tx.send_replace(Done);
+                    tx.send_replace(Done);
+                });
+
+                // handle messages
+                spawn_in_scope(
+                    async move {
+                        // do-while pattern
+                        loop {
+                            let new_state = rx.borrow_and_update().deref().clone();
+                            state.set(new_state);
+                            if rx.changed().await.is_err() {
+                                break;
+                            }
+                        }
+
+                        // get final message
+                        let new_state = rx.borrow();
+                        state.set(new_state.clone());
+
+                        match job.await {
+                            Ok(()) => {}
+                            Err(e) => {
+                                //TODO: show in UI ?
+                                error!("{}", e);
+                            }
+                        }
+                    },
+                    popup_scope_id,
+                );
             })
             .into();
 
         Popup::new()
             .width(Size::px(450.0))
-            .on_close_request(on_close.clone())
+            //.on_close_request(on_close.clone())
             .maybe(open(), |popup| {
                 popup.child(PopupTitle::new(t!("add_install"))).child(
                     PopupContent::new()
@@ -136,6 +247,7 @@ impl Component for AddInstallPopup {
                                     Input::new(id)
                                         .width(Size::flex(1.0))
                                         .auto_focus(true)
+                                        .enabled(matches!(*state.read(), AddInstallState::New))
                                         .placeholder(t!("install_id")),
                                 ))
                                 .child(form_row(
@@ -143,40 +255,46 @@ impl Component for AddInstallPopup {
                                     // TOOD: add version select
                                     label().text(version.read().clone()),
                                 ))
-                                .maybe_child(progress_download.peek().is_sign_positive().then(
+                                .maybe_child(download_percent.read().is_sign_positive().then(
                                     || {
-                                        ProgressBar::new(*progress_download.read())
+                                        ProgressBar::new(*download_percent.read())
+                                            .show_progress(false)
                                             .width(Size::flex(1.0))
                                     },
                                 ))
-                                .maybe_child(progress_install.peek().is_sign_positive().then(
-                                    || {
-                                        ProgressBar::new(*progress_install.read())
-                                            .width(Size::flex(1.0))
-                                    },
+                                .maybe_child(unpacking_percent.read().is_sign_positive().then(
+                                    || ProgressBar::new(unpacking_percent()).width(Size::flex(1.0)),
                                 ))
-                                .child(label().overline().text(
-                                    "Mockup, does not download new versions, in-memory only!",
-                                )),
-                        )
-                        .child(
-                            PopupButtons::new()
+                                .child(label().text(status_text.read().clone()))
                                 .child(
-                                    Button::new()
-                                        .on_press(move |_| on_close.call(()))
-                                        .child(t!("cancel")),
-                                )
+                                    label()
+                                        .overline()
+                                        .max_lines(1)
+                                        .text("Mockup, does not download new versions yet!"),
+                                ),
+                        )
+                        .child(match *state.read() {
+                            AddInstallState::New => PopupButtons::new()
+                                .child(Button::new().on_press(on_close).child(t!("cancel")))
                                 .child(
                                     Button::new()
                                         .filled()
                                         .on_press(move |_| {
                                             let id = id.peek().clone();
                                             let version = version.peek().clone();
-                                            on_submit.call((id, version));
+                                            on_download.call((id, version));
                                         })
-                                        .child(t!("create")),
+                                        .child(t!("download")),
                                 ),
-                        ),
+                            AddInstallState::Downloading(_) => PopupButtons::new().child(
+                                Button::new().enabled(false).child("TODO: implement cancel"),
+                            ),
+                            Unpacking(_) => PopupButtons::new().child(
+                                Button::new().enabled(false).child("TODO: implement cancel"),
+                            ),
+                            Done => PopupButtons::new()
+                                .child(Button::new().on_press(on_ok).child(t!("ok"))),
+                        }),
                 )
             })
     }

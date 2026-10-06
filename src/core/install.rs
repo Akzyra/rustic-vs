@@ -65,6 +65,10 @@ impl Install {
             path: dir_path,
         })
     }
+
+    pub fn reload(&mut self) {
+        self.game_version = get_game_version(&self.path);
+    }
 }
 
 fn get_game_version(path: &Path) -> Option<String> {
