@@ -5,6 +5,7 @@ mod core;
 mod ui;
 mod vs;
 
+static NAME: &str = env!("CARGO_PKG_NAME");
 static NAME_VERSION: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 static USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),

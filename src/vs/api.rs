@@ -3,7 +3,7 @@ use json5::from_str;
 use log;
 use rss::Channel;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
 use std::io::BufReader;
 use ureq::http::header::USER_AGENT;
@@ -12,13 +12,13 @@ const RSS_URL: &str = "https://www.vintagestory.at/blog.html/?rss=1";
 const STABLE_URL: &str = "https://api.vintagestory.at/stable.json";
 const UNSTABLE_URL: &str = "https://api.vintagestory.at/stable-unstable.json";
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct DownloadInfoUrls {
     pub cdn: String,
     pub local: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct DownloadInfo {
     pub filename: String,
     pub filesize: String,
@@ -47,8 +47,8 @@ pub enum DownloadPlatform {
 }
 #[derive(Debug, Clone, Default)]
 pub struct Downloads {
-    pub stable: HashMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
-    pub unstable: HashMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
+    pub stable: BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
+    pub unstable: BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
 }
 
 pub fn load_versions() -> Result<Downloads, Box<dyn Error>> {
@@ -65,7 +65,7 @@ pub fn load_versions() -> Result<Downloads, Box<dyn Error>> {
 
 fn get_downloads(
     url: &str,
-) -> Result<HashMap<String, HashMap<DownloadPlatform, DownloadInfo>>, Box<dyn Error>> {
+) -> Result<BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>, Box<dyn Error>> {
     let resp = ureq::get(url)
         .header(USER_AGENT, crate::USER_AGENT)
         .call()?;

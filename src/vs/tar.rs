@@ -17,6 +17,7 @@ where
 {
     // TAR can only be streamed, so we read twice...
     // first pass: collect stats
+    let start_time = Instant::now();
     let tar_gz_file = File::open(tar_gz_path)?;
     let tar = GzDecoder::new(tar_gz_file);
     let mut archive = Archive::new(tar);
@@ -30,7 +31,6 @@ where
         ..Default::default()
     });
 
-    let start_time = Instant::now();
     let mut files_total: u64 = 0;
     let mut files_written: u64 = 0;
     let mut bytes_total: u64 = 0;
@@ -95,6 +95,11 @@ where
         elapsed_secs,
         speed_bps,
     });
-    log::info!("unpacked {} files, {} bytes", files_written, bytes_written,);
+    log::info!(
+        "unpacked {} files, {} bytes, {} sec",
+        files_written,
+        bytes_written,
+        elapsed_secs
+    );
     Ok(())
 }

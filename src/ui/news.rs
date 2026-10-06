@@ -4,7 +4,6 @@ use freya::html::{HtmlHandle, HtmlSource, HtmlViewer};
 use freya::i18n::t;
 use freya::icons::lucide;
 use freya::prelude::*;
-use std::error::Error;
 use std::ops::Not;
 use std::time::Duration;
 

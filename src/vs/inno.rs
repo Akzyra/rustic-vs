@@ -14,6 +14,7 @@ pub fn unpack_inno<F>(
 where
     F: FnMut(Progress),
 {
+    let start_time = Instant::now();
     let inno_file = File::open(inno_path)?;
     let mut inno = Inno::new(inno_file)?;
     let header = inno.header();
@@ -36,7 +37,6 @@ where
         .map(|e| e.uncompressed_size())
         .sum();
 
-    let start_time = Instant::now();
     let mut files_written: u64 = 0;
     let mut bytes_written: u64 = 0;
 
@@ -82,6 +82,11 @@ where
         elapsed_secs,
         speed_bps,
     });
-    log::info!("unpacked {} files, {} bytes", files_written, bytes_written,);
+    log::info!(
+        "unpacked {} files, {} bytes, {} sec",
+        files_written,
+        bytes_written,
+        elapsed_secs
+    );
     Ok(())
 }
