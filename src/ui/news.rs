@@ -4,7 +4,6 @@ use freya::html::{HtmlHandle, HtmlSource, HtmlViewer};
 use freya::i18n::tid;
 use freya::icons::lucide;
 use freya::prelude::*;
-use std::ops::Not;
 use std::time::Duration;
 
 #[derive(PartialEq)]
@@ -12,12 +11,12 @@ pub struct News;
 
 impl Component for News {
     fn render(&self) -> impl IntoElement {
-        let mut feed = use_consume::<State<Option<Vec<FeedEntry>>>>();
+        let mut feed = use_consume::<State<Vec<FeedEntry>>>();
         let mut future = use_future(move || async move {
-            if feed.peek().is_none() {
-                match load_news_feed() {
+            if feed.peek().is_empty() {
+                match load_news_feed().await {
                     Ok(entries) => {
-                        feed.set(Some(entries));
+                        feed.set(entries);
                     }
                     Err(e) => {
                         log::error!("failed to load news feed: {}", e);
@@ -25,7 +24,7 @@ impl Component for News {
                 }
             }
         });
-        let loading = feed.read().is_none();
+        let loading = feed.read().is_empty();
         flex_rect(Direction::Vertical, SPACING_MD)
             .theme_background()
             .padding(SPACING_SM)
@@ -40,7 +39,7 @@ impl Component for News {
                     .child(rect().width(Size::flex(1.0)))
                     .child(
                         icon_button(Size::px(21.0), lucide::rotate_cw()).on_press(move |_| {
-                            feed.set(None);
+                            feed.set(Vec::new());
                             future.start();
                         }),
                     ),
@@ -51,21 +50,15 @@ impl Component for News {
                     .animation(SkeletonAnimation::Shimmer)
                     .duration(Duration::from_secs(2))
                     // needs maybe_child since expect() would fail on None
-                    .maybe_child(loading.not().then(|| {
+                    .maybe_child((!loading).then(|| {
                         ScrollView::new()
                             .expanded()
                             .spacing(SPACING_MD)
                             .scroll_with_arrows(false)
                             .drag_scrolling(false)
-                            .children(
-                                feed.read()
-                                    .as_ref()
-                                    .expect("maybe_child() guard")
-                                    .iter()
-                                    .map(|feed_entry: &FeedEntry| RssRow {
-                                        feed_entry: feed_entry.clone(),
-                                    }),
-                            )
+                            .children(feed.read().iter().map(|feed_entry: &FeedEntry| RssRow {
+                                feed_entry: feed_entry.clone(),
+                            }))
                     })),
             )
     }

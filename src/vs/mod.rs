@@ -7,7 +7,6 @@ use std::sync::LazyLock;
 use std::time::Instant;
 use std::{env, fs, io};
 use thiserror::Error;
-use ureq::http::header::USER_AGENT;
 
 pub mod api;
 
@@ -39,7 +38,7 @@ pub enum DownloadError {
     Io(#[from] io::Error),
 
     #[error("request failed")]
-    Request(#[from] ureq::Error),
+    Request(#[from] reqwest::Error),
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -131,11 +130,16 @@ where
         temp_dir.display()
     );
 
-    let mut resp = ureq::get(&download_info.urls.cdn)
-        .header(USER_AGENT, crate::USER_AGENT)
-        .call()?;
+    let client = reqwest::blocking::Client::builder()
+        .user_agent(crate::USER_AGENT)
+        .build()
+        .expect("download client failed");
 
-    let bytes_total = resp.body().content_length().unwrap_or_default(); // Option<u64>
+    let mut resp = client
+        .get(&download_info.urls.cdn)
+        .send()?
+        .error_for_status()?;
+    let bytes_total = resp.content_length().unwrap_or_default();
 
     on_progress(Progress {
         current_file: download_info.filename.clone(),
@@ -146,13 +150,12 @@ where
         ..Default::default()
     });
 
-    let mut reader = resp.body_mut().as_reader();
     let mut writer = BufWriter::new(File::create(&temp_file)?);
     let mut buf = [0u8; 128 * 1024];
     let mut bytes_written = 0u64;
 
     loop {
-        let n = reader.read(&mut buf)?;
+        let n = resp.read(&mut buf)?;
         if n == 0 {
             break;
         }

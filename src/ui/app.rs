@@ -24,11 +24,18 @@ pub fn app() -> impl IntoElement {
     use_provide_context(|| State::create(settings));
     use_provide_context(|| State::create(load_installs(&cwd)));
     use_provide_context(|| State::create(load_instances(&cwd)));
-    use_provide_context(|| State::create(None::<Vec<FeedEntry>>));
+    use_provide_context(|| State::create(Vec::<FeedEntry>::new()));
 
     let mut version_downloads = use_provide_context(|| State::create(Downloads::default()));
     use_future(move || async move {
-        version_downloads.set(load_versions().unwrap());
+        match load_versions().await {
+            Ok(dl) => {
+                version_downloads.set(dl);
+            }
+            Err(e) => {
+                log::error!("Failed to load versions: {}", e);
+            }
+        }
     });
 
     Router::<Route>::new(|| RouterConfig::default().with_initial_path(Route::News))

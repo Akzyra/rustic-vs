@@ -5,12 +5,18 @@ use rss::Channel;
 use serde::Deserialize;
 use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
-use std::io::BufReader;
-use ureq::http::header::USER_AGENT;
+use std::sync::LazyLock;
 
 const RSS_URL: &str = "https://www.vintagestory.at/blog.html/?rss=1";
 const STABLE_URL: &str = "https://api.vintagestory.at/stable.json";
 const UNSTABLE_URL: &str = "https://api.vintagestory.at/stable-unstable.json";
+
+static CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
+    reqwest::ClientBuilder::new()
+        .user_agent(crate::USER_AGENT)
+        .build()
+        .expect("failed to build client")
+});
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct DownloadInfoUrls {
@@ -51,9 +57,9 @@ pub struct Downloads {
     pub unstable: BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
 }
 
-pub fn load_versions() -> Result<Downloads, Box<dyn Error>> {
-    let stable = get_downloads(STABLE_URL)?;
-    let unstable = get_downloads(UNSTABLE_URL)?;
+pub async fn load_versions() -> Result<Downloads, Box<dyn Error>> {
+    let stable = get_downloads(STABLE_URL).await?;
+    let unstable = get_downloads(UNSTABLE_URL).await?;
 
     log::info!(
         "fetched versions: {:?} stable, {:?} unstable",
@@ -63,13 +69,11 @@ pub fn load_versions() -> Result<Downloads, Box<dyn Error>> {
     Ok(Downloads { stable, unstable })
 }
 
-fn get_downloads(
+async fn get_downloads(
     url: &str,
 ) -> Result<BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>, Box<dyn Error>> {
-    let resp = ureq::get(url)
-        .header(USER_AGENT, crate::USER_AGENT)
-        .call()?;
-    let content = resp.into_body().read_to_string()?;
+    let resp = CLIENT.get(url).send().await?;
+    let content = resp.text().await?;
 
     Ok(from_str(&content)?)
 }
@@ -100,13 +104,11 @@ impl FeedEntry {
     }
 }
 
-pub fn load_news_feed() -> Result<Vec<FeedEntry>, Box<dyn Error>> {
-    let mut resp = ureq::get(RSS_URL)
-        .header(USER_AGENT, crate::USER_AGENT)
-        .call()?;
-    let reader = resp.body_mut().as_reader();
+pub async fn load_news_feed() -> Result<Vec<FeedEntry>, Box<dyn Error>> {
+    let resp = CLIENT.get(RSS_URL).send().await?;
+    let bytes = resp.bytes().await?;
 
-    let channel = Channel::read_from(BufReader::new(reader))?;
+    let channel = Channel::read_from(&bytes[..])?;
     log::info!("got channel: {:?}", channel.title);
 
     Ok(channel
