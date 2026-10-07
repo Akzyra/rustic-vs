@@ -1,7 +1,7 @@
 use crate::ui::components::*;
 use crate::vs::api::{FeedEntry, load_news_feed};
 use freya::html::{HtmlHandle, HtmlSource, HtmlViewer};
-use freya::i18n::t;
+use freya::i18n::tid;
 use freya::icons::lucide;
 use freya::prelude::*;
 use std::ops::Not;
@@ -35,21 +35,14 @@ impl Component for News {
                         label()
                             .font_weight(FontWeight::BOLD)
                             .font_size(20.0)
-                            .text(t!("news_header")),
+                            .text(tid!("news_header")),
                     )
                     .child(rect().width(Size::flex(1.0)))
                     .child(
-                        Button::new()
-                            .padding(6.0)
-                            .on_press(move |_| {
-                                feed.set(None);
-                                future.start();
-                            })
-                            .child(
-                                SvgViewer::new(lucide::rotate_cw())
-                                    .width(Size::px(21.0))
-                                    .height(Size::px(21.0)),
-                            ),
+                        icon_button(Size::px(21.0), lucide::rotate_cw()).on_press(move |_| {
+                            feed.set(None);
+                            future.start();
+                        }),
                     ),
             )
             .child(

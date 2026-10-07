@@ -100,8 +100,8 @@ where
                 current_file: format!("checking existing {}", download_info.filename),
                 files_total: 1,
                 files_written: 0,
-                bytes_total: size / 2, // fake progress for hashing
-                bytes_written: size,
+                bytes_total: size,
+                bytes_written: size / 2, // fake 50% progress for hashing
                 ..Default::default()
             });
 

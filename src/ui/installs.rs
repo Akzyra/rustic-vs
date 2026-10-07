@@ -28,13 +28,13 @@ impl Component for Installs {
                         label()
                             .font_weight(FontWeight::BOLD)
                             .font_size(20.0)
-                            .text(t!("installs_header")),
+                            .text(tid!("installs_header")),
                     )
                     .child(rect().width(Size::flex(1.0)))
                     .child(
                         Button::new()
                             .on_press(move |_| show_add.set(true))
-                            .child(t!("add_install")),
+                            .child(tid!("add_install")),
                     ),
             )
             .child(
@@ -97,7 +97,7 @@ impl Component for AddInstallPopup {
     fn render(&self) -> impl IntoElement {
         let popup_scope_id = current_scope_id();
 
-        let mut open = self.show;
+        let mut show = self.show;
         let mut id = use_state(String::new);
         let unstable = use_state(|| false);
         let selected_version = use_state(|| "1.22.7".to_string());
@@ -165,7 +165,7 @@ impl Component for AddInstallPopup {
         });
 
         let on_close: EventHandler<_> = (move |_| {
-            open.set(false);
+            show.set(false);
             id.set(String::new());
             //TODO: reset select
             state.set(AddInstallState::New);
@@ -181,7 +181,7 @@ impl Component for AddInstallPopup {
             installs.write().push(new_install2.clone());
 
             // reset
-            open.set(false);
+            show.set(false);
             id.set(String::new());
             //TODO: reset select
             state.set(AddInstallState::New);
@@ -279,23 +279,23 @@ impl Component for AddInstallPopup {
         Popup::new()
             .width(Size::px(450.0))
             //.on_close_request(on_close.clone())
-            .maybe(open(), |popup| {
-                popup.child(PopupTitle::new(t!("add_install"))).child(
+            .maybe(show(), |popup| {
+                popup.child(PopupTitle::new(tid!("add_install"))).child(
                     PopupContent::new()
                         .child(
                             flex_rect(Direction::Vertical, SPACING_MD)
                                 .child(form_row(
                                     &label_width,
-                                    t!("install_id"),
+                                    tid!("install_id"),
                                     Input::new(id)
                                         .width(Size::flex(1.0))
                                         .auto_focus(true)
                                         .enabled(matches!(*state.read(), AddInstallState::New))
-                                        .placeholder(t!("install_id")),
+                                        .placeholder(tid!("install_id")),
                                 ))
                                 .child(form_row(
                                     &label_width,
-                                    t!("install_version"),
+                                    tid!("install_version"),
                                     // TOOD: add version select
                                     label().text(selected_version.read().clone()),
                                 ))
@@ -303,7 +303,7 @@ impl Component for AddInstallPopup {
                                     || {
                                         form_row(
                                             &label_width,
-                                            t!("download"),
+                                            tid!("download"),
                                             ProgressBar::new(*download_percent.read())
                                                 .width(Size::flex(1.0)),
                                         )
@@ -313,7 +313,7 @@ impl Component for AddInstallPopup {
                                     || {
                                         form_row(
                                             &label_width,
-                                            t!("unpacking"),
+                                            tid!("unpacking"),
                                             ProgressBar::new(*unpacking_percent.read())
                                                 .width(Size::flex(1.0)),
                                         )
@@ -327,7 +327,7 @@ impl Component for AddInstallPopup {
                         )
                         .child(match *state.read() {
                             AddInstallState::New => PopupButtons::new()
-                                .child(Button::new().on_press(on_close).child(t!("cancel")))
+                                .child(Button::new().on_press(on_close).child(tid!("cancel")))
                                 .child(
                                     Button::new()
                                         .filled()
@@ -336,7 +336,7 @@ impl Component for AddInstallPopup {
                                             let version = selected_version.peek().clone();
                                             on_download.call((id, version));
                                         })
-                                        .child(t!("download")),
+                                        .child(tid!("download")),
                                 ),
                             AddInstallState::Downloading(_) => PopupButtons::new().child(
                                 Button::new()
@@ -351,7 +351,7 @@ impl Component for AddInstallPopup {
                                     .child("TODO: implement cancel"),
                             ),
                             Done => PopupButtons::new()
-                                .child(Button::new().on_press(on_ok).child(t!("ok"))),
+                                .child(Button::new().on_press(on_ok).child(tid!("ok"))),
                         }),
                 )
             })

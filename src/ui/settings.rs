@@ -1,7 +1,7 @@
 use crate::core::settings::THEMES;
 use crate::ui::components::*;
 use crate::ui::get_theme;
-use freya::i18n::t;
+use freya::i18n::tid;
 use freya::prelude::*;
 
 #[derive(PartialEq)]
@@ -27,7 +27,7 @@ impl Component for Settings {
                         label()
                             .font_weight(FontWeight::BOLD)
                             .font_size(20.0)
-                            .text(t!("settings_header")),
+                            .text(tid!("settings_header")),
                     )
                     .child(rect().width(Size::flex(1.0)))
                     .child(label().font_family("Consolas").text(crate::NAME_VERSION)),
@@ -37,7 +37,7 @@ impl Component for Settings {
                     .width(Size::px(450.0))
                     .child(form_row(
                         &label_width,
-                        t!("settings_theme"),
+                        tid!("settings_theme"),
                         Select::new()
                             .width(Size::flex(1.0))
                             .selected_item(current_name)

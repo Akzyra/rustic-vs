@@ -1,6 +1,6 @@
 use crate::core::instance::Instance;
 use crate::ui::components::*;
-use freya::i18n::t;
+use freya::i18n::tid;
 use freya::prelude::*;
 
 #[derive(PartialEq)]
@@ -15,6 +15,7 @@ impl Component for InstanceEdit {
         let instances = instances_state.peek();
         let instance = instances.iter().find(|i| i.id == instance_id).unwrap();
 
-        main_rect(t!("instance_edit_header", name: instance.name.clone())).child("todo: add this..")
+        main_rect(tid!("instance_edit_header", name: instance.name.clone()))
+            .child("todo: add this..")
     }
 }

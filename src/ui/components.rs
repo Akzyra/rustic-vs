@@ -49,6 +49,13 @@ pub fn form_row(size: &Size, lbl: String, elem: impl IntoElement) -> Rect {
         )
         .child(rect().width(Size::flex(1.0)).child(elem))
 }
+/// Button+SvgViewer helper, padding set to be square
+pub fn icon_button(size: Size, icon: impl Into<ImageSource>) -> Button {
+    Button::new()
+        .compact()
+        .padding(6.0)
+        .child(SvgViewer::new(icon).width(size.clone()).height(size))
+}
 
 pub fn tool_tipped_pos(
     tooltip: String,

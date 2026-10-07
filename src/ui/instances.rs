@@ -1,7 +1,7 @@
 use crate::core::install::Install;
 use crate::core::instance::Instance;
 use crate::ui::components::*;
-use freya::i18n::t;
+use freya::i18n::tid;
 use freya::icons::lucide;
 use freya::prelude::*;
 
@@ -25,13 +25,13 @@ impl Component for Instances {
                         label()
                             .font_weight(FontWeight::BOLD)
                             .font_size(20.0)
-                            .text(t!("instances_header")),
+                            .text(tid!("instances_header")),
                     )
                     .child(rect().width(Size::flex(1.0)))
                     .child(
                         Button::new()
                             .on_press(move |_| show_add.set(true))
-                            .child(t!("add_instance")),
+                            .child(tid!("add_instance")),
                     ),
             )
             .child(
@@ -48,24 +48,26 @@ impl Component for Instances {
                                 cell_fix(Alignment::Center).child(
                                     label()
                                         .font_weight(FontWeight::BOLD)
-                                        .text(t!("instance_id")),
+                                        .text(tid!("instance_id")),
                                 ),
                             )
                             .child(
                                 cell_fix(Alignment::Center).child(
                                     label()
                                         .font_weight(FontWeight::BOLD)
-                                        .text(t!("instance_name")),
+                                        .text(tid!("instance_name")),
+                                ),
+                            )
+                            .child(
+                                cell_fix(Alignment::Center).child(
+                                    label()
+                                        .font_weight(FontWeight::BOLD)
+                                        .text(tid!("install_id")),
                                 ),
                             )
                             .child(cell_fix(Alignment::Center).child(
-                                label().font_weight(FontWeight::BOLD).text(t!("install_id")),
-                            ))
-                            .child(
-                                cell_fix(Alignment::Center).child(
-                                    label().font_weight(FontWeight::BOLD).text(t!("actions")),
-                                ),
-                            ),
+                                label().font_weight(FontWeight::BOLD).text(tid!("actions")),
+                            )),
                     )
                     .child(
                         ScrollView::new().children(instances.read().iter().enumerate().map(
@@ -154,21 +156,21 @@ impl Component for AddInstancePopup {
             .on_close_request(on_close.clone())
             .maybe(open(), |popup| {
                 popup
-                    .child(PopupTitle::new(t!("add_instance_title")))
+                    .child(PopupTitle::new(tid!("add_instance_title")))
                     .child(
                         PopupContent::new().child(
                             flex_rect(Direction::Vertical, SPACING_MD)
                                 .child(form_row(
                                     &label_width,
-                                    t!("instance_name"),
+                                    tid!("instance_name"),
                                     Input::new(name)
                                         .width(Size::flex(1.0))
                                         .auto_focus(true)
-                                        .placeholder(t!("instance_name")),
+                                        .placeholder(tid!("instance_name")),
                                 ))
                                 .child(form_row(
                                     &label_width,
-                                    t!("install_id"),
+                                    tid!("install_id"),
                                     flex_rect(Direction::Horizontal, SPACING_SM)
                                         .width(Size::flex(1.0))
                                         .child(
@@ -211,16 +213,8 @@ impl Component for AddInstancePopup {
                                             ),
                                         )
                                         .child(
-                                            Button::new()
-                                                .width(Size::auto())
-                                                .padding(6.0)
-                                                .outline()
-                                                .on_press(move |_| selected_install_idx.set(None))
-                                                .child(
-                                                    SvgViewer::new(lucide::x())
-                                                        .width(Size::px(24.0))
-                                                        .height(Size::px(24.0)),
-                                                ),
+                                            icon_button(Size::px(24.0), lucide::x())
+                                                .on_press(move |_| selected_install_idx.set(None)),
                                         ),
                                 )),
                         ),
@@ -230,7 +224,7 @@ impl Component for AddInstancePopup {
                             .child(
                                 Button::new()
                                     .on_press(move |_| on_close.call(()))
-                                    .child(t!("cancel")),
+                                    .child(tid!("cancel")),
                             )
                             .child(
                                 Button::new()
@@ -246,7 +240,7 @@ impl Component for AddInstancePopup {
                                             });
                                         on_submit.call((current_name, install_id));
                                     })
-                                    .child(t!("create")),
+                                    .child(tid!("create")),
                             ),
                     )
             })

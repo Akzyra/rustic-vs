@@ -82,26 +82,26 @@ impl Component for Layout {
                     .child(sidebar_link(
                         Route::News,
                         lucide::rss(),
-                        t!("menu_news"),
-                        t!("menu_news_tt"),
+                        tid!("menu_news"),
+                        tid!("menu_news_tt"),
                     ))
                     .child(sidebar_link(
                         Route::Installs,
                         lucide::boxes(),
-                        t!("menu_installs"),
-                        t!("menu_installs_tt"),
+                        tid!("menu_installs"),
+                        tid!("menu_installs_tt"),
                     ))
                     .child(sidebar_link(
                         Route::Instances,
                         lucide::folder_cog(),
-                        t!("menu_instances"),
-                        t!("menu_instances_tt"),
+                        tid!("menu_instances"),
+                        tid!("menu_instances_tt"),
                     ))
                     .child(sidebar_link(
                         Route::Settings,
                         lucide::settings(),
-                        t!("menu_settings"),
-                        t!("menu_settings_tt"),
+                        tid!("menu_settings"),
+                        tid!("menu_settings_tt"),
                     ))
                     .child(rect().height(Size::flex(1.)))
                     .child(
@@ -135,15 +135,15 @@ impl Component for Layout {
                             instance_id: instances.read()[selected_instance_idx()].id.clone(),
                         },
                         lucide::bolt(),
-                        t!("menu_instance_edit"),
-                        t!("menu_instance_edit_tt"),
+                        tid!("menu_instance_edit"),
+                        tid!("menu_instance_edit_tt"),
                     ))
                     .child(
                         Button::new()
                             .height(Size::px(56.0))
                             .width(Size::Fill)
                             .filled()
-                            .child(t!(
+                            .child(tid!(
                                 "play",
                                 name: instances.read()[selected_instance_idx()].name.clone()
                             )),
