@@ -1,3 +1,4 @@
+use crate::core::utils::get_folder_size;
 use filenamify::filenamify;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -21,8 +22,11 @@ pub struct Instance {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub install_id: Option<String>,
 
+    // runtime values
     #[serde(skip)]
     pub path: PathBuf,
+    #[serde(skip)]
+    pub size: Option<String>,
 }
 
 #[derive(Error, Debug)]
@@ -51,6 +55,7 @@ impl Instance {
             id,
             name,
             install_id,
+            size: None,
         }
     }
 
@@ -83,6 +88,7 @@ impl Instance {
             if let Ok(mut inst) = json5::from_str::<Instance>(&json) {
                 // attach non serialized data
                 inst.id = id;
+                inst.size = get_folder_size(&dir_path);
                 inst.path = dir_path;
                 return Ok(inst);
             } else {
@@ -99,10 +105,15 @@ impl Instance {
             id: id.clone(),
             name: id,
             install_id: None,
+            size: get_folder_size(&dir_path),
             path: dir_path,
         };
         instance.save()?;
         Ok(instance)
+    }
+
+    pub fn reload(&mut self) {
+        self.size = get_folder_size(&self.path);
     }
 }
 
