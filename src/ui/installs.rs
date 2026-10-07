@@ -1,9 +1,10 @@
-use crate::core::install::Install;
+use crate::core::install::{Install, load_installs};
 use crate::ui::components::*;
 use crate::ui::installs::AddInstallState::{Done, Unpacking};
 use crate::vs::api::{DownloadPlatform, Downloads};
 use crate::vs::{Progress, download_vs, unpack_vs};
-use freya::i18n::t;
+use freya::i18n::tid;
+use freya::icons::lucide;
 use freya::prelude::*;
 use std::ops::Deref;
 use tokio::sync::watch;
@@ -13,8 +14,10 @@ pub struct Installs;
 
 impl Component for Installs {
     fn render(&self) -> impl IntoElement {
-        let installs = use_consume::<State<Vec<Install>>>();
+        let mut installs = use_consume::<State<Vec<Install>>>();
         let mut show_add = use_state(|| false);
+        let mut show_delete = use_state(|| false);
+        let mut delete_install = use_state(|| None::<Install>);
 
         flex_rect(Direction::Vertical, SPACING_MD)
             .theme_background()
@@ -32,6 +35,15 @@ impl Component for Installs {
                     )
                     .child(rect().width(Size::flex(1.0)))
                     .child(
+                        icon_button(Size::px(21.0), lucide::rotate_cw()).on_press(move |_| {
+                            let mut installs = installs.write();
+                            installs.clear();
+
+                            let cwd = std::env::current_dir().expect("CWD must exist");
+                            *installs = load_installs(&cwd);
+                        }),
+                    )
+                    .child(
                         Button::new()
                             .on_press(move |_| show_add.set(true))
                             .child(tid!("add_install")),
@@ -39,28 +51,42 @@ impl Component for Installs {
             )
             .child(
                 Table::new()
-                    .column_widths([Size::flex(1.0), Size::flex(1.0), Size::px(100.0)])
+                    .column_widths([
+                        Size::flex(1.0),
+                        Size::flex(1.0),
+                        Size::px(110.0),
+                        Size::px(90.0),
+                    ])
                     .child(
                         TableRow::new()
-                            .child(cell_fix(Alignment::Center).child(
-                                label().font_weight(FontWeight::BOLD).text(t!("install_id")),
-                            ))
                             .child(
                                 cell_fix(Alignment::Center).child(
                                     label()
                                         .font_weight(FontWeight::BOLD)
-                                        .text(t!("install_version")),
+                                        .text(tid!("install_id")),
                                 ),
                             )
                             .child(
                                 cell_fix(Alignment::Center).child(
-                                    label().font_weight(FontWeight::BOLD).text(t!("actions")),
+                                    label()
+                                        .font_weight(FontWeight::BOLD)
+                                        .text(tid!("install_version")),
                                 ),
-                            ),
+                            )
+                            .child(
+                                cell_fix(Alignment::Center).child(
+                                    label().font_weight(FontWeight::BOLD).text(tid!("size")),
+                                ),
+                            )
+                            .child(cell_fix(Alignment::Center).child(
+                                label().font_weight(FontWeight::BOLD).text(tid!("actions")),
+                            )),
                     )
                     .child(
                         ScrollView::new().children(installs.read().iter().enumerate().map(
                             |(i, install)| {
+                                let install = install.clone();
+                                let install_path = install.path.clone();
                                 TableRow::new()
                                     .key(i)
                                     .child(cell_fix(Alignment::Center).child(install.id.clone()))
@@ -72,12 +98,42 @@ impl Component for Installs {
                                                 .unwrap_or_else(|| "—".to_string()),
                                         ),
                                     )
-                                    .child(cell_fix(Alignment::Center).child("todo"))
+                                    .child(cell_fix(Alignment::Center).child(
+                                        install.size.clone().unwrap_or_else(|| "—".to_string()),
+                                    ))
+                                    .child(
+                                        cell_fix(Alignment::Center)
+                                            .spacing(SPACING_XS)
+                                            .child(
+                                                icon_button(Size::px(16.0), lucide::folder_open())
+                                                    .flat()
+                                                    .on_press(move |_| {
+                                                        if let Err(e) = open::that(&install_path) {
+                                                            log::error!("failed open path: {}", e)
+                                                        };
+                                                    }),
+                                            )
+                                            .child(
+                                                icon_button(Size::px(16.0), lucide::trash())
+                                                    .flat()
+                                                    .color(Color::WHITE)
+                                                    .background(Color::from_rgb(153, 15, 15))
+                                                    .hover_background(Color::from_rgb(222, 2, 2))
+                                                    .on_press(move |_| {
+                                                        delete_install.set(Some(install.clone()));
+                                                        show_delete.set(true);
+                                                    }),
+                                            ),
+                                    )
                             },
                         )),
                     ),
             )
             .child(AddInstallPopup { show: show_add })
+            .child(DeleteInstallPopup {
+                show: show_delete,
+                delete_install,
+            })
     }
 }
 #[derive(PartialEq)]
@@ -277,7 +333,7 @@ impl Component for AddInstallPopup {
 
         let label_width = Size::px(100.0);
         Popup::new()
-            .width(Size::px(450.0))
+            .width(Size::px(500.0))
             //.on_close_request(on_close.clone())
             .maybe(show(), |popup| {
                 popup.child(PopupTitle::new(tid!("add_install"))).child(
@@ -354,6 +410,112 @@ impl Component for AddInstallPopup {
                                 .child(Button::new().on_press(on_ok).child(tid!("ok"))),
                         }),
                 )
+            })
+    }
+}
+
+#[derive(PartialEq)]
+struct DeleteInstallPopup {
+    show: State<bool>,
+    delete_install: State<Option<Install>>,
+}
+
+impl Component for DeleteInstallPopup {
+    fn render(&self) -> impl IntoElement {
+        let popup_scope_id = current_scope_id();
+
+        let mut show = self.show;
+        let delete_install = self.delete_install;
+
+        let mut installs = use_consume::<State<Vec<Install>>>();
+        let mut deleting = use_state(|| false);
+
+        let on_delete: EventHandler<()> = (move |_| {
+            deleting.set(true);
+            spawn_in_scope(
+                async move {
+                    let delete_install = delete_install.peek();
+                    let delete_install = delete_install.as_ref().unwrap();
+
+                    match tokio::fs::remove_dir_all(&delete_install.path).await {
+                        Ok(_) => {
+                            installs
+                                .write()
+                                .retain(|install| install.id != delete_install.id);
+                            deleting.set(false);
+                            show.set(false);
+                        }
+                        Err(e) => {
+                            log::error!("failed to remove directory: {:?}", e);
+                            // TODO: show error in UI
+                            deleting.set(false);
+                        }
+                    };
+                },
+                popup_scope_id,
+            );
+        })
+        .into();
+
+        Popup::new()
+            .width(Size::px(500.0))
+            .on_close_request(move |_| {
+                if !deleting() {
+                    show.set(false)
+                }
+            })
+            .maybe(show(), |popup| {
+                // lifetimes...
+                let install = self.delete_install.peek();
+                let install = install.as_ref().unwrap();
+                let game_version = install
+                    .game_version
+                    .clone()
+                    .unwrap_or_else(|| "—".to_string());
+
+                popup
+                    .child(PopupTitle::new(tid!(
+                        "delete_install_title",
+                        id: &install.id,
+                        version: &game_version
+                    )))
+                    .child(
+                        PopupContent::new().child(
+                            flex_rect(Direction::Horizontal, SPACING_MD)
+                                .child(if deleting() {
+                                    CircularLoader::new().size(48.0).into_element()
+                                } else {
+                                    SvgViewer::new(lucide::triangle_alert())
+                                        .width(Size::px(48.0))
+                                        .height(Size::px(48.0))
+                                        .into_element()
+                                })
+                                .child(
+                                    flex_rect(Direction::Vertical, SPACING_MD)
+                                        .child(label().text(tid!("delete_install_text")))
+                                        .child(
+                                            label()
+                                                .text(format!("Path: {}", install.path.display())),
+                                        ),
+                                ),
+                        ),
+                    )
+                    .maybe_child((!deleting()).then(|| {
+                        PopupButtons::new()
+                            .child(
+                                Button::new()
+                                    .child(tid!("cancel"))
+                                    .on_press(move |_| show.set(false)),
+                            )
+                            .child(
+                                Button::new()
+                                    .child(tid!("delete"))
+                                    .color(Color::WHITE)
+                                    .background(Color::from_rgb(153, 15, 15))
+                                    .hover_background(Color::from_rgb(222, 2, 2))
+                                    .on_press(move |_| on_delete.call(())),
+                            )
+                    }))
             })
     }
 }

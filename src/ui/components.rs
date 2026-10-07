@@ -2,6 +2,7 @@ use crate::core::install::Install;
 use crate::ui::app::Route;
 use freya::prelude::*;
 
+pub const SPACING_XS: f32 = 4.0;
 pub const SPACING_SM: f32 = 8.0;
 pub const SPACING_MD: f32 = 16.0;
 

@@ -16,9 +16,11 @@ play = Play {$name}
 cancel = Cancel
 ok = Ok
 create = Create
+delete = Delete
 download = Download
 unpacking = Unpacking
 actions = Actions
+size = Size
 
 # page: news
 news_header = Vintage Story RSS Newsfeed
@@ -33,6 +35,12 @@ add_install = Add Version
 # popup: add_install
 add_install_title = Download Version
 add_install_show_unstable = Show Unstable
+# popup: delete_install
+delete_install_title = Delete version "{$id}" ({$version})?
+delete_install_text = Depending on size this may take a bit of time.
+
+  A Vintage Story game/version folder does not store userdata.
+  Unless you modified the game files, changed configs or some mods store data there you SHOULD NOT loose data.
 
 ## instances
 instance_name = Instance Name

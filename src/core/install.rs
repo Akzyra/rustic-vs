@@ -17,6 +17,7 @@ pub struct Install {
     pub id: String,
     pub game_version: Option<String>,
     pub path: PathBuf,
+    pub size: Option<String>,
 }
 
 #[derive(Error, Debug)]
@@ -37,6 +38,7 @@ impl Install {
             path: cwd.join(DIR_NAME).join(&id),
             id,
             game_version,
+            size: None,
         }
     }
 
@@ -57,17 +59,20 @@ impl Install {
         }
 
         let id = dir_name_str.to_string();
-        let game_version = get_game_version(dir_path.as_path());
+        let game_version = get_game_version(&dir_path);
+        let size = get_folder_size(&dir_path);
 
         Ok(Install {
             id,
             game_version,
             path: dir_path,
+            size,
         })
     }
 
     pub fn reload(&mut self) {
         self.game_version = get_game_version(&self.path);
+        self.size = get_folder_size(&self.path);
     }
 }
 
@@ -84,6 +89,12 @@ fn get_game_version(path: &Path) -> Option<String> {
                     .map(String::from)
             })
     })
+}
+
+fn get_folder_size(path: &Path) -> Option<String> {
+    fs_extra::dir::get_size(path)
+        .map(|size| humansize::format_size(size, humansize::BINARY))
+        .ok()
 }
 
 pub fn load_installs(cwd: &Path) -> Vec<Install> {

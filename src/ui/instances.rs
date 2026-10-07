@@ -40,7 +40,7 @@ impl Component for Instances {
                         Size::flex(1.0),
                         Size::flex(1.3),
                         Size::flex(1.0),
-                        Size::px(100.0),
+                        Size::px(90.0),
                     ])
                     .child(
                         TableRow::new()
@@ -72,6 +72,7 @@ impl Component for Instances {
                     .child(
                         ScrollView::new().children(instances.read().iter().enumerate().map(
                             |(i, instance)| {
+                                let instance_path = instance.path.clone();
                                 TableRow::new()
                                     .key(i)
                                     .child(cell_fix(Alignment::Center).child(instance.id.clone()))
@@ -84,7 +85,20 @@ impl Component for Instances {
                                                 .unwrap_or_else(|| "—".to_string()),
                                         ),
                                     )
-                                    .child(cell_fix(Alignment::Center).child("todo"))
+                                    .child(
+                                        cell_fix(Alignment::Center)
+                                            .spacing(SPACING_XS)
+                                            .child(
+                                                icon_button(Size::px(16.0), lucide::folder_open())
+                                                    .flat()
+                                                    .on_press(move |_| {
+                                                        if let Err(e) = open::that(&instance_path) {
+                                                            log::error!("failed open path: {}", e)
+                                                        };
+                                                    }),
+                                            )
+                                            .child("todo"),
+                                    )
                             },
                         )),
                     ),

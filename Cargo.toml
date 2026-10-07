@@ -11,6 +11,8 @@ log = "0.4"
 fern = "0.7"
 humantime = "2"
 humansize = "2"
+fs_extra = "1"
+open = "5"
 thiserror = "2"
 filenamify = "0.1.2"
 freya = { version = "0.5.0-rc.9", features = ["i18n", "router", "icons-lucide", "html"] }
