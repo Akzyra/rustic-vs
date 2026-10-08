@@ -34,7 +34,8 @@ installs_header = Installed VS Versions
 add_install = Add Version
 # popup: add_install
 add_install_title = Download Version
-add_install_show_unstable = Show Unstable
+add_install_show_unstable = Show unstable
+add_install_select_latest = Select latest
 # popup: delete_install
 delete_install_title = Delete version "{$id}" ({$version})?
 delete_install_text = Depending on size this may take a bit of time.

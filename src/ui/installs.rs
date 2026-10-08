@@ -1,13 +1,15 @@
 use crate::core::install::{Install, load_installs};
 use crate::ui::components::*;
 use crate::ui::installs::AddInstallState::{Done, Unpacking};
-use crate::vs::api::{DownloadPlatform, Downloads};
+use crate::vs::api::Downloads;
 use crate::vs::{Progress, download_vs, unpack_vs};
 use freya::i18n::tid;
 use freya::icons::lucide;
 use freya::prelude::*;
 use std::ops::Deref;
 use tokio::sync::watch;
+
+const LATEST: &str = "latest";
 
 #[derive(PartialEq)]
 pub struct Installs;
@@ -155,32 +157,12 @@ impl Component for AddInstallPopup {
 
         let mut show = self.show;
         let mut id = use_state(String::new);
-        let unstable = use_state(|| false);
-        let selected_version = use_state(|| "1.22.7".to_string());
+        let mut unstable = use_state(|| false);
+        let mut selected_version = use_state(|| LATEST.to_string());
 
         let downloads = use_consume::<State<Downloads>>();
         let mut installs = use_consume::<State<Vec<Install>>>();
         let mut install = use_state(|| None::<Install>);
-
-        //TODO: implement select box
-        // TODO: remove hardcoded values
-        let download_version = use_memo(move || {
-            let version = selected_version.read().clone();
-            let platform = DownloadPlatform::Windows;
-
-            let dls = downloads.read();
-            let map = if unstable() {
-                &dls.unstable
-            } else {
-                &dls.stable
-            };
-
-            map.get(&version)
-                .expect("version must exist")
-                .get(&platform)
-                .expect("platform must exist")
-                .clone()
-        });
 
         let mut state = use_state(|| AddInstallState::New);
         let download_percent = use_memo(move || match state.read().deref() {
@@ -229,8 +211,7 @@ impl Component for AddInstallPopup {
         .into();
 
         let on_ok: EventHandler<_> = (move |_| {
-            // reload to get game version
-            //TODO: fix use of partially moved value: `install`
+            // reload to get game version and size
             let new_install = install.read().clone();
             let mut new_install2 = new_install.unwrap();
             new_install2.reload();
@@ -239,7 +220,7 @@ impl Component for AddInstallPopup {
             // reset
             show.set(false);
             id.set(String::new());
-            //TODO: reset select
+            selected_version.set(LATEST.to_string());
             state.set(AddInstallState::New);
         })
         .into();
@@ -269,11 +250,27 @@ impl Component for AddInstallPopup {
                     return;
                 }
 
-                let dl_info = download_version.peek().clone();
+                let selected_version = selected_version.peek().clone();
+                let downloads = downloads.peek();
+                let dl_info = if LATEST.eq(&selected_version) {
+                    downloads.get_latest_info(crate::PLATFORM)
+                } else {
+                    downloads.get_info(unstable(), &selected_version, crate::PLATFORM)
+                };
+                let Some(dl_info) = dl_info else {
+                    // TODO: show error in UI
+                    log::error!(
+                        "failed to find {} for {:?}",
+                        selected_version,
+                        crate::PLATFORM
+                    );
+                    return;
+                };
+
                 let out_path = new_install.path.clone();
                 install.set(Some(new_install));
 
-                // move unpack to blocking pool
+                // move download + unpack to blocking pool
                 let (tx, mut rx) = watch::channel(AddInstallState::New);
                 let job = tokio::task::spawn_blocking(move || {
                     // download file
@@ -352,8 +349,29 @@ impl Component for AddInstallPopup {
                                 .child(form_row(
                                     &label_width,
                                     tid!("install_version"),
-                                    // TOOD: add version select
-                                    label().text(selected_version.read().clone()),
+                                    flex_rect(Direction::Horizontal, SPACING_SM)
+                                        .width(Size::flex(1.0))
+                                        .child(
+                                            // TODO: prevent select when not AddInstallState::New
+                                            // TODO: fix sorting
+                                            select_downloads(
+                                                selected_version,
+                                                downloads.read().get_versions(unstable()),
+                                            ),
+                                        )
+                                        .child(tool_tipped(
+                                            tid!("add_install_select_latest"),
+                                            icon_button(Size::px(24.0), lucide::sparkles())
+                                                .on_press(move |_| {
+                                                    selected_version.set(LATEST.to_string())
+                                                }),
+                                        ))
+                                        .child(
+                                            Tile::new()
+                                                .on_select(move |_| unstable.toggle())
+                                                .child(Checkbox::new().selected(*unstable.read()))
+                                                .child(tid!("add_install_show_unstable")),
+                                        ),
                                 ))
                                 .maybe_child(download_percent.read().is_sign_positive().then(
                                     || {
@@ -412,6 +430,38 @@ impl Component for AddInstallPopup {
                 )
             })
     }
+}
+
+#[inline(always)]
+fn select_downloads(mut selected_version: State<String>, versions: Vec<String>) -> Select {
+    Select::new()
+        .width(Size::px(120.0))
+        .selected_item(selected_version.read().clone())
+        .child(
+            ScrollView::new()
+                .width(Size::px(120.0))
+                .height(Size::window_percent(35.0))
+                .spacing(SPACING_XS)
+                // prevent issues with Select
+                .drag_scrolling(false)
+                .scroll_with_arrows(false)
+                .show_scrollbar(false)
+                .children(versions.iter().map(|version| {
+                    let version = version.clone();
+                    // prevent MenuItem under Scrollbar
+                    rect().margin(Gaps::new(0.0, 6.0, 0.0, 0.0)).child(
+                        MenuItem::new()
+                            .key(&version)
+                            // compact select
+                            .padding(Gaps::new_symmetric(4.0, 6.0))
+                            .child(version.clone())
+                            .selected(version.eq(&selected_version.read().to_string()))
+                            .on_press(move |_| {
+                                selected_version.set(version.clone());
+                            }),
+                    )
+                })),
+        )
 }
 
 #[derive(PartialEq)]

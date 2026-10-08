@@ -57,6 +57,39 @@ pub struct Downloads {
     pub unstable: BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
 }
 
+impl Downloads {
+    pub fn get_versions(&self, unstable: bool) -> Vec<String> {
+        if unstable {
+            self.unstable.keys().cloned().collect()
+        } else {
+            self.stable.keys().cloned().collect()
+        }
+    }
+
+    pub fn get_latest_info(&self, platform: DownloadPlatform) -> Option<DownloadInfo> {
+        self.unstable.values().find_map(|inner_map| {
+            inner_map
+                .iter()
+                .find(|(p, info)| **p == platform && info.latest.is_positive())
+                .map(|(_, info)| info.clone())
+        })
+    }
+
+    pub fn get_info(
+        &self,
+        unstable: bool,
+        version: &String,
+        platform: DownloadPlatform,
+    ) -> Option<DownloadInfo> {
+        let map = if unstable {
+            &self.unstable
+        } else {
+            &self.stable
+        };
+        Some(map.get(version)?.get(&platform)?.clone())
+    }
+}
+
 pub async fn load_versions() -> Result<Downloads, Box<dyn Error>> {
     let stable = get_downloads(STABLE_URL).await?;
     let unstable = get_downloads(UNSTABLE_URL).await?;

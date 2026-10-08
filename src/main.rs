@@ -1,3 +1,9 @@
+#![cfg_attr(
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
+)]
+
+use crate::vs::api::DownloadPlatform;
 use freya::prelude::{LaunchConfig, WindowConfig, launch};
 use tokio::runtime::Builder;
 
@@ -14,6 +20,17 @@ static USER_AGENT: &str = concat!(
     " (https://github.com/Akzyra/rustic-vs)",
 );
 
+#[rustfmt::skip] 
+const PLATFORM: DownloadPlatform = {
+    #[cfg(target_os = "windows")]
+    { DownloadPlatform::Windows }
+    #[cfg(target_os = "linux")]
+    { DownloadPlatform::Linux }
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    { DownloadPlatform::MacArm64 }
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    { DownloadPlatform::MacX64 }
+};
 const ICON: &[u8] = include_bytes!("../assets/temp.png");
 
 fn main() -> Result<(), fern::InitError> {
