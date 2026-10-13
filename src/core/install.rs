@@ -9,6 +9,7 @@ use thiserror::Error;
 
 const DIR_NAME: &str = "installs";
 const GAME_DLL: &str = "Vintagestory.dll";
+const GAME_EXE: &str = "Vintagestory.exe";
 const ASSETS: &str = "assets";
 const VERSION_PREFIX: &str = "version-";
 const VERSION_SUFFIX: &str = ".txt";
@@ -29,8 +30,8 @@ pub enum InstallError {
     #[error("Instance path has bad name: {0:?}")]
     BadDirName(OsString),
 
-    #[error("Missing file: {0}")]
-    MissingFile(String),
+    #[error("Missing game executable (exe/dll)")]
+    MissingExecutable(),
 }
 impl Install {
     pub fn create(cwd: &Path, unsafe_id: String, game_version: Option<String>) -> Self {
@@ -55,8 +56,8 @@ impl Install {
             return Err(InstallError::BadDirName(dir_name.to_os_string()));
         };
 
-        if !dir_path.join(GAME_DLL).exists() {
-            return Err(InstallError::MissingFile(GAME_DLL.into()));
+        if !dir_path.join(GAME_DLL).exists() && !dir_path.join(GAME_EXE).exists() {
+            return Err(InstallError::MissingExecutable());
         }
 
         let id = dir_name_str.to_string();
@@ -78,7 +79,8 @@ impl Install {
 }
 
 fn get_game_version(path: &Path) -> Option<String> {
-    path.join(ASSETS).read_dir().ok().and_then(|read_dir| {
+    // easy TXT check
+    let version = path.join(ASSETS).read_dir().ok().and_then(|read_dir| {
         read_dir
             .flatten()
             .filter(|e| e.file_type().map(|ft| ft.is_file()).unwrap_or(false))
@@ -89,7 +91,32 @@ fn get_game_version(path: &Path) -> Option<String> {
                     .strip_circumfix(VERSION_PREFIX, VERSION_SUFFIX)
                     .map(String::from)
             })
-    })
+    });
+    if version.is_some() {
+        return version;
+    }
+
+    // parse EXE/DLL
+    let mut bin_path = path.join(GAME_EXE);
+    if !bin_path.exists() {
+        bin_path = path.join(GAME_DLL);
+    }
+    if !bin_path.exists() {
+        return None;
+    }
+
+    let pe = exe::VecPE::from_disk_file(bin_path).ok()?;
+    let vi = exe::VSVersionInfo::parse(&pe).ok()?;
+
+    vi.string_file_info?
+        .children
+        .into_iter()
+        .filter_map(|table| table.string_map().ok())
+        .find_map(|map| {
+            map.get("FileVersion")
+                .or_else(|| map.get("ProductVersion"))
+                .map(|v| v.to_string())
+        })
 }
 
 pub fn load_installs(cwd: &Path) -> Vec<Install> {
