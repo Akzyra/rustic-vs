@@ -15,8 +15,9 @@ fs_extra = "1"
 open = "5"
 thiserror = "2"
 filenamify = "0.1.2"
-freya = { version = "0.5.0-rc.9", features = ["i18n", "router", "icons-lucide", "html"] }
+freya = { version = "0.5.0-rc.10", features = ["i18n", "router", "icons-lucide", "html"] }
 serde = { version = "1", features = ["derive"] }
+indexmap = { version = "2", features = ["serde"] }
 json5 = "1.3"
 rss = "2.1"
 reqwest = { version = "0.13", features = ["blocking"] }
@@ -24,7 +25,7 @@ chrono = "0.4"
 tokio = { version = "1", features = ["full"] }
 flate2 = "1.0"
 tar = "0.4"
-inno = { version = "0.6", features = ["extract"] }
+inno = { version = "0.7.0", features = ["extract"] }
 md5 = "0.8.1"
 
 # force scrollbars, version must match to freya-html

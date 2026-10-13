@@ -1,9 +1,10 @@
 use chrono::{DateTime, Local};
+use indexmap::IndexMap;
 use json5::from_str;
 use log;
 use rss::Channel;
 use serde::Deserialize;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::error::Error;
 use std::sync::LazyLock;
 
@@ -53,8 +54,8 @@ pub enum DownloadPlatform {
 }
 #[derive(Debug, Clone, Default)]
 pub struct Downloads {
-    pub stable: BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
-    pub unstable: BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
+    pub stable: IndexMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
+    pub unstable: IndexMap<String, HashMap<DownloadPlatform, DownloadInfo>>,
 }
 
 impl Downloads {
@@ -104,7 +105,7 @@ pub async fn load_versions() -> Result<Downloads, Box<dyn Error>> {
 
 async fn get_downloads(
     url: &str,
-) -> Result<BTreeMap<String, HashMap<DownloadPlatform, DownloadInfo>>, Box<dyn Error>> {
+) -> Result<IndexMap<String, HashMap<DownloadPlatform, DownloadInfo>>, Box<dyn Error>> {
     let resp = CLIENT.get(url).send().await?;
     let content = resp.text().await?;
 
