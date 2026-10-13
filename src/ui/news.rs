@@ -54,6 +54,7 @@ impl Component for News {
                         ScrollView::new()
                             .expanded()
                             .spacing(SPACING_MD)
+                            .auto_hide_scrollbars(false)
                             .scroll_with_arrows(false)
                             .drag_scrolling(false)
                             .children(feed.read().iter().map(|feed_entry: &FeedEntry| RssRow {
@@ -95,6 +96,7 @@ impl Component for RssRow {
             .outline()
             .width(Size::fill())
             .padding(SPACING_SM)
+            .margin(Gaps::new(0.0, 2.0 * SPACING_SM, 0.0, 0.0))
             .height(Size::auto())
             .child(
                 flex_rect(Direction::Vertical, 0.0)
